@@ -71,4 +71,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'internal-ht.firebasestorage.app',
     iosBundleId: 'com.example.teaServe',
   );
+
 }

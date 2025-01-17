@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
@@ -7,10 +9,13 @@ import 'providers/drink_selection_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  final notificationService = NotificationService();
-  await notificationService.initialize();
-  
+
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+  }
+
   runApp(const MyApp());
 }
 

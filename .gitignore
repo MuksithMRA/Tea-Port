@@ -107,3 +107,6 @@ temp/
 *.apk
 *.ipa
 *.aab
+
+# deploy
+public/

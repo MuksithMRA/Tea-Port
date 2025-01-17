@@ -1,10 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:appwrite/appwrite.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'appwrite_service.dart';
+import 'package:tea_serve/services/appwrite_service.dart';
+
 import '../models/tea_order.dart';
 
 class NotificationService {
@@ -12,57 +14,90 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final AppwriteService _appwrite = AppwriteService();
+  late final FirebaseMessaging _messaging;
+  late final FlutterLocalNotificationsPlugin _localNotifications;
+
+  bool get isSupported => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   Future<void> initialize() async {
-    // Request notification permissions
-    await _firebaseMessaging.requestPermission(
+    if (!isSupported) return;
+
+    _messaging = FirebaseMessaging.instance;
+    _localNotifications = FlutterLocalNotificationsPlugin();
+
+    await _initializeFirebaseMessaging();
+    await _initializeLocalNotifications();
+  }
+
+  Future<void> _initializeFirebaseMessaging() async {
+    if (!isSupported) return;
+
+    // Request permission
+    NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // Get FCM token
-    final fcmToken = await _firebaseMessaging.getToken();
-    if (fcmToken != null) {
-      await _updateUserFCMToken(fcmToken);
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      // Get FCM token
+      String? token = await _messaging.getToken();
+      if (token != null) {
+        await _updateUserFCMToken(token);
+      }
+
+      // Listen for token refresh
+      _messaging.onTokenRefresh.listen(_updateUserFCMToken);
+
+      // Handle messages
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
     }
+  }
 
-    // Listen for token refresh
-    _firebaseMessaging.onTokenRefresh.listen(_updateUserFCMToken);
+  Future<void> _initializeLocalNotifications() async {
+    if (!isSupported) return;
 
-    // Initialize local notifications
-    const initializationSettingsAndroid =
+    const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initializationSettingsIOS = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    const initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
+    const DarwinInitializationSettings iOSSettings =
+        DarwinInitializationSettings();
+
+    const InitializationSettings settings = InitializationSettings(
+      android: androidSettings,
+      iOS: iOSSettings,
     );
 
     await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: _onNotificationTapped,
+      settings,
+      onDidReceiveNotificationResponse: _handleNotificationTap,
     );
 
-    // Handle background messages
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    // Create notification channel for Android
+    if (Platform.isAndroid) {
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'tea_serve_channel',
+              'Tea Serve Notifications',
+              description: 'Notifications from Tea Serve app',
+              importance: Importance.high,
+            ),
+          );
+    }
   }
 
   Future<void> _updateUserFCMToken(String token) async {
+    if (!isSupported) return;
+
+    AppwriteService appwrite = AppwriteService();
     try {
-      final currentUser = _appwrite.account.get();
-      await _appwrite.databases.updateDocument(
+      final currentUser = appwrite.account.get();
+      await appwrite.databases.updateDocument(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.usersCollectionId,
         documentId: (await currentUser).$id,
@@ -73,34 +108,73 @@ class NotificationService {
     }
   }
 
-  Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('Received foreground message: ${message.data}');
-    await showNotification(
-      title: message.notification?.title ?? 'New Order',
-      body: message.notification?.body ?? 'You have a new order to prepare',
-    );
+  void _handleForegroundMessage(RemoteMessage message) async {
+    if (!isSupported) return;
+    await _showLocalNotification(message);
   }
 
-  void _onNotificationTapped(NotificationResponse response) {
-    // Handle notification tap
-    print('Notification tapped: ${response.payload}');
+  Future<void> _showLocalNotification(RemoteMessage message) async {
+    if (!isSupported) return;
+
+    RemoteNotification? notification = message.notification;
+    AndroidNotification? android = message.notification?.android;
+
+    if (notification != null) {
+      await _localNotifications.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'tea_serve_channel',
+            'Tea Serve Notifications',
+            channelDescription: 'Notifications from Tea Serve app',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: android?.smallIcon,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: jsonEncode(message.data),
+      );
+    }
+  }
+
+  void _handleNotificationTap(NotificationResponse response) {
+    if (!isSupported) return;
+
+    if (response.payload != null) {
+      final data = jsonDecode(response.payload!);
+      debugPrint('Notification tapped: $data');
+    }
+  }
+
+  void _handleMessageOpenedApp(RemoteMessage message) {
+    if (!isSupported) return;
+    debugPrint('App opened from notification: ${message.data}');
   }
 
   Future<void> showNotification({
     required String title,
     required String body,
-    String? payload,
+    Map<String, dynamic>? payload,
   }) async {
+    if (!isSupported) return;
+
     const androidDetails = AndroidNotificationDetails(
       'tea_serve_channel',
-      'Tea Service Notifications',
-      channelDescription: 'Notifications for tea service orders',
+      'Tea Serve Notifications',
+      channelDescription: 'Notifications from Tea Serve app',
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
     );
 
-    const iosDetails = DarwinNotificationDetails(
+    const iOSDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
@@ -108,22 +182,22 @@ class NotificationService {
 
     const details = NotificationDetails(
       android: androidDetails,
-      iOS: iosDetails,
+      iOS: iOSDetails,
     );
 
     await _localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch,
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
       details,
-      payload: payload,
+      payload: payload != null ? jsonEncode(payload) : null,
     );
   }
 
   Future<void> sendJanitorNotification(TeaOrder order) async {
     try {
       // Get all users with janitor role
-      final janitors = await _appwrite.databases.listDocuments(
+      final janitors = await AppwriteService().databases.listDocuments(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.usersCollectionId,
         queries: [Query.equal('role', 'janitor')],
@@ -133,19 +207,19 @@ class NotificationService {
       for (final janitor in janitors.documents) {
         final fcmToken = janitor.data['fcmToken'];
         if (fcmToken != null) {
-          await _appwrite.functions.createExecution(
-            functionId: 'sendPushNotification',
-            body: json.encode({
-              'token': fcmToken,
-              'title': 'New Tea Order',
-              'body':
-                  'New ${order.drinkType.toString().split('.').last} order from ${order.userName}',
-              'data': {
-                'orderId': order.id,
-                'type': 'new_order',
-              },
-            }),
-          );
+          await AppwriteService().functions.createExecution(
+                functionId: 'sendPushNotification',
+                body: json.encode({
+                  'token': fcmToken,
+                  'title': 'New Tea Order',
+                  'body':
+                      'New ${order.drinkType.toString().split('.').last} order from ${order.userName}',
+                  'data': {
+                    'orderId': order.id,
+                    'type': 'new_order',
+                  },
+                }),
+              );
         }
       }
     } catch (e) {
@@ -154,16 +228,14 @@ class NotificationService {
   }
 }
 
-// Top-level function for handling background messages
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Handling background message: ${message.data}');
-  // Initialize Firebase if needed
-  // await Firebase.initializeApp();
-
-  // Show notification
-  await NotificationService().showNotification(
-    title: message.notification?.title ?? 'New Order',
-    body: message.notification?.body ?? 'You have a new order to prepare',
-  );
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    debugPrint('Handling background message: ${message.messageId}');
+    await NotificationService().showNotification(
+      title: message.notification?.title ?? 'New Order',
+      body: message.notification?.body ?? 'You have a new order to prepare',
+      payload: message.data,
+    );
+  }
 }
