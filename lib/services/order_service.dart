@@ -1,4 +1,5 @@
 import 'package:appwrite/appwrite.dart';
+import 'package:flutter/foundation.dart';
 import '../models/tea_order.dart';
 import 'appwrite_service.dart';
 import 'notification_service.dart'; // Import NotificationService
@@ -188,9 +189,13 @@ class OrderService {
         documentId: orderId,
         data: currentData,
       );
-      print('Order status updated successfully');
+      if (kDebugMode) {
+        print('Order status updated successfully');
+      }
     } catch (e) {
-      print('Error updating order status: $e');
+      if (kDebugMode) {
+        print('Error updating order status: $e');
+      }
       rethrow;
     }
   }

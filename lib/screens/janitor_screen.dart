@@ -22,8 +22,6 @@ class _JanitorScreenState extends State<JanitorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
     
     return Scaffold(
       body: RefreshIndicator(

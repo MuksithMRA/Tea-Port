@@ -32,7 +32,7 @@ class UserManagementService {
         },
       );
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 

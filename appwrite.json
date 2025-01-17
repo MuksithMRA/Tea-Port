@@ -1,0 +1,24 @@
+{
+    "projectId": "678a51bd00087d475cfb",
+    "projectName": "Tea Serve",
+    "functions": [
+        {
+            "$id": "sendPushNotification",
+            "name": "Send Push Notification",
+            "runtime": "node-18.0",
+            "execute": ["any"],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/index.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "path": "functions/sendPushNotification"
+        }
+    ]
+}

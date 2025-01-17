@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:appwrite/appwrite.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'appwrite_service.dart';
 import '../models/tea_order.dart';
@@ -61,21 +62,19 @@ class NotificationService {
   Future<void> _updateUserFCMToken(String token) async {
     try {
       final currentUser = _appwrite.account.get();
-      if (currentUser != null) {
-        await _appwrite.databases.updateDocument(
-          databaseId: AppwriteService.databaseId,
-          collectionId: AppwriteService.usersCollectionId,
-          documentId: (await currentUser).$id,
-          data: {'fcmToken': token},
-        );
-      }
+      await _appwrite.databases.updateDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.usersCollectionId,
+        documentId: (await currentUser).$id,
+        data: {'fcmToken': token},
+      );
     } catch (e) {
-      print('Error updating FCM token: $e');
+      debugPrint('Error updating FCM token: $e');
     }
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    print('Received foreground message: ${message.data}');
+    debugPrint('Received foreground message: ${message.data}');
     await showNotification(
       title: message.notification?.title ?? 'New Order',
       body: message.notification?.body ?? 'You have a new order to prepare',

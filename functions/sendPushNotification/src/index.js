@@ -1,19 +1,20 @@
 const admin = require('firebase-admin');
+const path = require('path');
+const fs = require('fs');
 
 module.exports = async function (req, res) {
-    // Initialize Firebase Admin SDK
-    if (!admin.apps.length) {
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                // Add your Firebase Admin SDK credentials here
-                "type": "service_account",
-                "project_id": "your-project-id",
-                // ... other credentials from your service account key
-            })
-        });
-    }
-
     try {
+        // Load config file
+        const configPath = path.join(__dirname, 'config.json');
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+        // Initialize Firebase Admin SDK
+        if (!admin.apps.length) {
+            admin.initializeApp({
+                credential: admin.credential.cert(config.firebase)
+            });
+        }
+
         const payload = JSON.parse(req.payload);
         const { token, title, body, data } = payload;
 
