@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "47791069713",
+    "project_id": "medoment-tea-serve",
+    "storage_bucket": "medoment-tea-serve.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:47791069713:android:868a4180f81a674fe26fb0",
+        "android_client_info": {
+          "package_name": "com.medoment.tea_serve"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkojW8-JSg1TDRiNu4_lCkeOl5o4Q8f_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
