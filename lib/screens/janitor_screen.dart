@@ -22,254 +22,295 @@ class _JanitorScreenState extends State<JanitorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async {
-          setState(() {});
-        },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              title: const Text('Janitor Dashboard'),
-              floating: true,
-              snap: true,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () async {
-                    final authService = Provider.of<AuthService>(context, listen: false);
-                    await authService.signOut();
-                    if (!mounted) return;
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  },
-                ),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).primaryColor.withOpacity(0.1),
-                      Colors.transparent,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFFFF8E1), Color(0xFFFFE0B2)],
+          ),
+        ),
+        child: RefreshIndicator(
+          color: const Color(0xFF8B4513),
+          onRefresh: () async {
+            setState(() {});
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                backgroundColor: const Color(0xFF8B4513),
+                foregroundColor: Colors.white,
+                title: Row(
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          child: Text(
-                            widget.userName[0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome,',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              Text(
-                                widget.userName,
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.cleaning_services, size: 24),
                     ),
-                    const SizedBox(height: 24),
-                    Row(
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.pending_actions,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Pending Orders',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        const Text(
+                          'Tea Port',
+                          style: TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          widget.userName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
+                floating: true,
+                snap: true,
+                elevation: 0,
+                actions: [
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.logout),
+                      onPressed: () async {
+                        final authService = Provider.of<AuthService>(context, listen: false);
+                        await authService.signOut();
+                        if (!mounted) return;
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ),
-            StreamBuilder<List<TeaOrder>>(
-              stream: orderService.getJanitorOrders(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return SliverFillRemaining(
-                    child: Center(
+              SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading orders:\n${snapshot.error}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                final orders = snapshot.data ?? [];
-
-                if (orders.isEmpty) {
-                  return SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.done_all,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No pending orders\nAll caught up!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return SliverPadding(
-                  padding: const EdgeInsets.all(16.0),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final order = orders[index];
-                        return Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => _showOrderActions(order),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: _getStatusColor(order.status),
-                                        child: Icon(
-                                          _getDrinkIcon(order.drinkType),
-                                          color: Colors.white,
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: const Color(0xFF8B4513),
+                                child: Text(
+                                  widget.userName[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.pending_actions,
+                                          color: Color(0xFF8B4513),
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Pending Orders',
+                                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: const Color(0xFF8B4513),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              StreamBuilder<List<TeaOrder>>(
+                stream: orderService.getJanitorOrders(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error loading orders:\n${snapshot.error}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  final orders = snapshot.data ?? [];
+
+                  if (orders.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.done_all,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No pending orders\nAll caught up!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.all(16.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 800),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: orders.length,
+                            itemBuilder: (context, index) {
+                              final order = orders[index];
+                              return Card(
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () => _showOrderActions(order),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           children: [
-                                            Text(
-                                              order.drinkType.toString().split('.').last,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
+                                            CircleAvatar(
+                                              backgroundColor: _getStatusColor(order.status),
+                                              child: Icon(
+                                                _getDrinkIcon(order.drinkType),
+                                                color: Colors.white,
                                               ),
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Ordered by: ${order.userName}',
-                                              style: TextStyle(
-                                                color: Colors.grey[600],
-                                                fontSize: 14,
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    order.drinkType.toString().split('.').last,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'Ordered by: ${order.userName}',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: _getStatusColor(order.status).withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                order.status.toString().split('.').last,
+                                                style: TextStyle(
+                                                  color: _getStatusColor(order.status),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(order.status).withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          order.status.toString().split('.').last,
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Ordered: ${_formatDateTime(order.orderTime)}',
                                           style: TextStyle(
-                                            color: _getStatusColor(order.status),
-                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[600],
                                             fontSize: 12,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Ordered: ${_formatDateTime(order.orderTime)}',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                      childCount: orders.length,
+                        ),
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: StreamBuilder<List<TeaOrder>>(

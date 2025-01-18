@@ -4,7 +4,7 @@ import '../services/auth_service.dart';
 import '../services/order_service.dart';
 import '../models/tea_order.dart';
 import '../screens/user_management_screen.dart';
-import 'login_screen.dart'; // Add this line
+import 'login_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -15,179 +15,258 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> {
   final OrderService _orderService = OrderService();
-  TimeOfDay? _selectedTime;
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
-  Future<void> _createScheduledOrder() async {
-    if (_selectedTime == null) return;
-
-    final now = DateTime.now();
-    var scheduledTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      _selectedTime!.hour,
-      _selectedTime!.minute,
-    );
-
-    // If the time is in the past, schedule for tomorrow
-    if (scheduledTime.isBefore(now)) {
-      scheduledTime = scheduledTime.add(const Duration(days: 1));
-    }
-
-    final order = TeaOrder(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'scheduled',
-      userName: 'Scheduled Order',
-      orderTime: DateTime.now(),
-      status: OrderStatus.pending,
-      isScheduled: true,
-      scheduledTime: scheduledTime,
-      drinkType: DrinkType.tea,
-    );
-
-    await _orderService.createOrder(order);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Scheduled order created successfully'),
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.people),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserManagementScreen(),
-                ),
-              );
-            },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFFFF8E1), Color(0xFFFFE0B2)],
           ),
-          IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: () async {
-              final authService = context.read<AuthService>();
-              await authService.signOut();
-              if (!context.mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        child: RefreshIndicator(
+          color: const Color(0xFF8B4513),
+          onRefresh: () async {
+            setState(() {});
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                backgroundColor: const Color(0xFF8B4513),
+                foregroundColor: Colors.white,
+                floating: true,
+                snap: true,
+                elevation: 8,
+                title: Row(
                   children: [
-                    const Text(
-                      'Schedule Tea Order',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _selectedTime != null
-                                ? 'Selected Time: ${_selectedTime!.format(context)}'
-                                : 'No time selected',
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () => _selectTime(context),
-                          icon: const Icon(Icons.access_time),
-                          label: const Text('Select Time'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed:
-                          _selectedTime != null ? _createScheduledOrder : null,
-                      child: const Text('Create Scheduled Order'),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.admin_panel_settings, size: 24),
+                          SizedBox(width: 8),
+                          Text('Admin Dashboard'),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Recent Orders',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: StreamBuilder<List<TeaOrder>>(
-                stream: _orderService.getJanitorOrders(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No orders'));
-                  }
-
-                  final orders = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: orders.length,
-                    itemBuilder: (context, index) {
-                      final order = orders[index];
-                      return Card(
-                        child: ListTile(
-                          leading: const Icon(Icons.local_cafe),
-                          title: Text(order.userName),
-                          subtitle: Text(
-                            'Status: ${order.status.toString().split('.').last}',
-                          ),
-                          trailing: Text(
-                            order.orderTime.toString().split('.')[0],
-                          ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.people),
+                    tooltip: 'User Management',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UserManagementScreen(),
                         ),
                       );
                     },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.logout),
+                    tooltip: 'Logout',
+                    onPressed: () async {
+                      final authService = Provider.of<AuthService>(context, listen: false);
+                      await authService.signOut();
+                      if (!mounted) return;
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              StreamBuilder<List<TeaOrder>>(
+                stream: _orderService.getAllOrders(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error loading orders:\n${snapshot.error}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  final orders = snapshot.data ?? [];
+
+                  if (orders.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.no_drinks,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No orders yet',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index == 0) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.history,
+                                        color: Color(0xFF8B4513),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'All Orders',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                _buildOrderCard(orders[index]),
+                              ],
+                            );
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: _buildOrderCard(orders[index]),
+                          );
+                        },
+                        childCount: orders.length,
+                      ),
+                    ),
                   );
                 },
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  Color _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Colors.orange;
+      case OrderStatus.preparing:
+        return Colors.blue;
+      case OrderStatus.completed:
+        return Colors.green;
+      case OrderStatus.cancelled:
+        return Colors.red;
+    }
+  }
+
+  IconData _getDrinkIcon(DrinkType type) {
+    switch (type) {
+      case DrinkType.tea:
+        return Icons.emoji_food_beverage;
+      case DrinkType.milkTea:
+        return Icons.coffee;
+      case DrinkType.coffee:
+        return Icons.coffee_maker;
+    }
+  }
+
+  Widget _buildOrderCard(TeaOrder order) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: _getStatusColor(order.status),
+          child: Icon(
+            _getDrinkIcon(order.drinkType),
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          order.userName,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text(
+          'Ordered: ${_formatDateTime(order.orderTime)}',
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 4,
+          ),
+          decoration: BoxDecoration(
+            color: _getStatusColor(order.status).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            order.status.toString().split('.').last,
+            style: TextStyle(
+              color: _getStatusColor(order.status),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
-          ],
+          ),
         ),
       ),
     );

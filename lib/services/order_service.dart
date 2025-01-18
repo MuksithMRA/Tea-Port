@@ -192,15 +192,46 @@ class OrderService {
   }
 
   // Get all orders (for admin)
-  Future<List<TeaOrder>> getAllOrders() async {
+  Stream<List<TeaOrder>> getAllOrders() async* {
+    final realtime = _appwrite.realtime;
+    
     try {
+      // First, yield initial orders
       final response = await _appwrite.databases.listDocuments(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.ordersCollectionId,
       );
       
-      return response.documents.map((doc) => TeaOrder.fromMap(doc.data)).toList();
+      final orders = response.documents.map((doc) {
+        final data = doc.data;
+        data['id'] = doc.$id;
+        return TeaOrder.fromMap(data);
+      }).toList();
+      
+      yield orders;
+
+      // Then listen to realtime updates
+      await for (final event in realtime.subscribe([
+        'databases.${AppwriteService.databaseId}.collections.${AppwriteService.ordersCollectionId}.documents'
+      ]).stream) {
+        debugPrint('Admin realtime event received: ${event.events}');
+        
+        // Get fresh data after any change
+        final updatedResponse = await _appwrite.databases.listDocuments(
+          databaseId: AppwriteService.databaseId,
+          collectionId: AppwriteService.ordersCollectionId,
+        );
+        
+        final updatedOrders = updatedResponse.documents.map((doc) {
+          final data = doc.data;
+          data['id'] = doc.$id;
+          return TeaOrder.fromMap(data);
+        }).toList();
+        
+        yield updatedOrders;
+      }
     } catch (e) {
+      debugPrint('Error in admin orders stream: $e');
       rethrow;
     }
   }
