@@ -170,6 +170,11 @@ class OrderService {
         documentId: orderId,
         data: currentData,
       );
+
+      // Send notification to the employee
+      final order = TeaOrder.fromMap({...currentData, 'id': orderId});
+      await NotificationService().sendOrderStatusNotification(order);
+      
       if (kDebugMode) {
         debugPrint('Order status updated successfully');
       }

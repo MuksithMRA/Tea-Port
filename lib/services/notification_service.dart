@@ -226,6 +226,51 @@ class NotificationService {
       debugPrint('Error sending janitor notification: $e');
     }
   }
+
+  Future<void> sendOrderStatusNotification(TeaOrder order) async {
+    try {
+      // Get the employee who placed the order
+      final employee = await AppwriteService().databases.getDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.usersCollectionId,
+        documentId: order.userId,
+      );
+
+      final fcmToken = employee.data['fcmToken'];
+      if (fcmToken != null) {
+        String statusMessage;
+        switch (order.status) {
+          case OrderStatus.pending:
+            statusMessage = 'Your order has been received';
+            break;
+          case OrderStatus.preparing:
+            statusMessage = 'Your tea is being prepared';
+            break;
+          case OrderStatus.cancelled:
+            statusMessage = 'Your order has been cancelled';
+            break;
+          default:
+            statusMessage = 'Your order status has been updated';
+        }
+
+        await AppwriteService().functions.createExecution(
+              functionId: 'sendPushNotification',
+              body: json.encode({
+                'token': fcmToken,
+                'title': 'Order Update',
+                'body': statusMessage,
+                'data': {
+                  'orderId': order.id,
+                  'type': 'status_update',
+                  'status': order.status.toString(),
+                },
+              }),
+            );
+      }
+    } catch (e) {
+      debugPrint('Error sending order status notification: $e');
+    }
+  }
 }
 
 @pragma('vm:entry-point')
