@@ -244,10 +244,13 @@ class NotificationService {
             statusMessage = 'Your order has been received';
             break;
           case OrderStatus.preparing:
-            statusMessage = 'Your tea is being prepared';
+            statusMessage = 'Your drink is being prepared';
             break;
           case OrderStatus.cancelled:
             statusMessage = 'Your order has been cancelled';
+            break;
+          case OrderStatus.completed:
+            statusMessage = 'Your drink is ready for pickup';
             break;
           default:
             statusMessage = 'Your order status has been updated';
