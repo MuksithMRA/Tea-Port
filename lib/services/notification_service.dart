@@ -5,7 +5,7 @@ import 'package:appwrite/appwrite.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:tea_serve/services/appwrite_service.dart';
+import 'package:tea_port/services/appwrite_service.dart';
 
 import '../models/tea_order.dart';
 
@@ -82,7 +82,7 @@ class NotificationService {
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(
             const AndroidNotificationChannel(
-              'tea_serve_channel',
+              'tea_port_channel',
               'Tea Serve Notifications',
               description: 'Notifications from Tea Serve app',
               importance: Importance.high,
@@ -126,7 +126,7 @@ class NotificationService {
         notification.body,
         NotificationDetails(
           android: AndroidNotificationDetails(
-            'tea_serve_channel',
+            'tea_port_channel',
             'Tea Serve Notifications',
             channelDescription: 'Notifications from Tea Serve app',
             importance: Importance.high,
@@ -166,7 +166,7 @@ class NotificationService {
     if (!isSupported) return;
 
     const androidDetails = AndroidNotificationDetails(
-      'tea_serve_channel',
+      'tea_port_channel',
       'Tea Serve Notifications',
       channelDescription: 'Notifications from Tea Serve app',
       importance: Importance.high,
@@ -223,7 +223,7 @@ class NotificationService {
         }
       }
     } catch (e) {
-      print('Error sending janitor notification: $e');
+      debugPrint('Error sending janitor notification: $e');
     }
   }
 }

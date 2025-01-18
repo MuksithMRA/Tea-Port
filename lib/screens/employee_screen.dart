@@ -43,9 +43,11 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                 IconButton(
                   icon: const Icon(Icons.logout),
                   onPressed: () async {
-                    final authService = Provider.of<AuthService>(context, listen: false);
+                    final authService =
+                        Provider.of<AuthService>(context, listen: false);
                     await authService.signOut();
                     if (!mounted) return;
+                    // ignore: use_build_context_synchronously
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
@@ -92,9 +94,12 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                               ),
                               Text(
                                 widget.userName,
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
@@ -105,8 +110,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     Text(
                       'Select your drink:',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -122,9 +127,11 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                   childAspectRatio: 1,
                 ),
                 delegate: SliverChildListDelegate([
-                  _buildDrinkTile(DrinkType.tea, Icons.emoji_food_beverage, 'Tea'),
+                  _buildDrinkTile(
+                      DrinkType.tea, Icons.emoji_food_beverage, 'Tea'),
                   _buildDrinkTile(DrinkType.milkTea, Icons.coffee, 'Milk Tea'),
-                  _buildDrinkTile(DrinkType.coffee, Icons.coffee_maker, 'Coffee'),
+                  _buildDrinkTile(
+                      DrinkType.coffee, Icons.coffee_maker, 'Coffee'),
                 ]),
               ),
             ),
@@ -141,8 +148,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     Text(
                       'Your Orders',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -163,11 +170,11 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).primaryColor,
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 4,
-                    offset: const Offset(0, -2),
+                    offset: Offset(0, -2),
                   ),
                 ],
               ),
@@ -209,7 +216,10 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                                       ),
                                     ),
                                     Text(
-                                      drinkProvider.selectedDrink!.toString().split('.').last,
+                                      drinkProvider.selectedDrink!
+                                          .toString()
+                                          .split('.')
+                                          .last,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -223,16 +233,19 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                               SizedBox(
                                 height: buttonHeight * 0.7,
                                 child: ElevatedButton.icon(
-                                  onPressed: () => _placeOrder(context, drinkProvider),
+                                  onPressed: () =>
+                                      _placeOrder(context, drinkProvider),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
-                                    foregroundColor: Theme.of(context).primaryColor,
+                                    foregroundColor:
+                                        Theme.of(context).primaryColor,
                                     elevation: 0,
                                     padding: EdgeInsets.symmetric(
                                       horizontal: screenSize.width * 0.04,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(buttonHeight * 0.35),
+                                      borderRadius: BorderRadius.circular(
+                                          buttonHeight * 0.35),
                                     ),
                                   ),
                                   icon: Icon(
@@ -271,7 +284,9 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+              color: isSelected
+                  ? Theme.of(context).primaryColor
+                  : Colors.transparent,
               width: 2,
             ),
           ),
@@ -306,7 +321,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     title,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       color: isSelected
                           ? Theme.of(context).primaryColor
                           : Colors.black87,
@@ -424,7 +440,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(order.status).withOpacity(0.1),
+                            color:
+                                _getStatusColor(order.status).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -466,7 +483,8 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
     );
   }
 
-  Future<void> _placeOrder(BuildContext context, DrinkSelectionProvider drinkProvider) async {
+  Future<void> _placeOrder(
+      BuildContext context, DrinkSelectionProvider drinkProvider) async {
     try {
       final order = TeaOrder(
         id: '',
@@ -483,6 +501,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
       if (!mounted) return;
       drinkProvider.clearSelection();
 
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -493,6 +512,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to place order: $e'),
@@ -527,7 +547,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-           '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   Color _getStatusColor(OrderStatus status) {

@@ -24,9 +24,9 @@ class OrderService {
       // Send notification to janitors
       await NotificationService().sendJanitorNotification(order);
       
-      print('Order created successfully with ID: $documentId'); // Debug print
+      debugPrint('Order created successfully with ID: $documentId'); // Debug print
     } catch (e) {
-      print('Error creating order: $e'); // Debug print
+      debugPrint('Error creating order: $e'); // Debug print
       rethrow;
     }
   }
@@ -44,7 +44,7 @@ class OrderService {
       await for (final event in realtime.subscribe([
         'databases.${AppwriteService.databaseId}.collections.${AppwriteService.ordersCollectionId}.documents'
       ]).stream) {
-        print('Realtime event received: ${event.events}'); // Debug print
+        debugPrint('Realtime event received: ${event.events}'); // Debug print
         
         // Handle different event types
         if (event.events.contains('databases.*.collections.*.documents.*.create') ||
@@ -56,7 +56,7 @@ class OrderService {
         }
       }
     } catch (e) {
-      print('Error in getEmployeeOrders: $e'); // Debug print
+      debugPrint('Error in getEmployeeOrders: $e'); // Debug print
       rethrow;
     }
   }
@@ -72,38 +72,19 @@ class OrderService {
         ],
       );
 
-      print('Initial orders response: ${response.documents.length}'); // Debug print
+      debugPrint('Initial orders response: ${response.documents.length}'); // Debug print
 
       return response.documents.map((doc) {
         final data = Map<String, dynamic>.from(doc.data);
         data['\$id'] = doc.$id; // Add the document ID to the data
-        print('Document data: $data'); // Debug print
+        debugPrint('Document data: $data'); // Debug print
         return TeaOrder.fromMap(data);
       }).toList();
     } catch (e) {
-      print('Error getting initial orders: $e'); // Debug print
+      debugPrint('Error getting initial orders: $e'); // Debug print
       rethrow;
     }
   }
-
-  List<TeaOrder> _handleRealtimeEvent(RealtimeMessage event, String userId) {
-    try {
-      final List<TeaOrder> orders = [];
-      
-      if (event.events.contains('databases.*.collections.*.documents.*')) {
-        final payload = event.payload;
-        if (payload['userId'] == userId) {
-          orders.add(TeaOrder.fromMap(payload));
-        }
-      }
-
-      return orders;
-    } catch (e) {
-      print('Error handling realtime event: $e'); // Debug print
-      return [];
-    }
-  }
-
   // Get initial orders for janitor
   Future<List<TeaOrder>> _getInitialJanitorOrders() async {
     try {
@@ -125,7 +106,7 @@ class OrderService {
         return TeaOrder.fromMap(data);
       }).toList();
     } catch (e) {
-      print('Error getting initial janitor orders: $e'); // Debug print
+      debugPrint('Error getting initial janitor orders: $e'); // Debug print
       rethrow;
     }
   }
@@ -143,7 +124,7 @@ class OrderService {
       await for (final event in realtime.subscribe([
         'databases.${AppwriteService.databaseId}.collections.${AppwriteService.ordersCollectionId}.documents'
       ]).stream) {
-        print('Janitor received realtime event: ${event.events}'); // Debug print
+        debugPrint('Janitor received realtime event: ${event.events}'); // Debug print
         
         // Handle different event types
         if (event.events.contains('databases.*.collections.*.documents.*.create') ||
@@ -155,7 +136,7 @@ class OrderService {
         }
       }
     } catch (e) {
-      print('Error in getJanitorOrders: $e'); // Debug print
+      debugPrint('Error in getJanitorOrders: $e'); // Debug print
       rethrow;
     }
   }
@@ -190,11 +171,11 @@ class OrderService {
         data: currentData,
       );
       if (kDebugMode) {
-        print('Order status updated successfully');
+        debugPrint('Order status updated successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error updating order status: $e');
+        debugPrint('Error updating order status: $e');
       }
       rethrow;
     }
@@ -203,9 +184,9 @@ class OrderService {
   Future<void> cancelOrder(String orderId) async {
     try {
       await updateOrderStatus(orderId, OrderStatus.cancelled);
-      print('Order cancelled successfully'); // Debug print
+      debugPrint('Order cancelled successfully'); // Debug print
     } catch (e) {
-      print('Error cancelling order: $e'); // Debug print
+      debugPrint('Error cancelling order: $e'); // Debug print
       rethrow;
     }
   }
@@ -220,7 +201,7 @@ class OrderService {
       
       return response.documents.map((doc) => TeaOrder.fromMap(doc.data)).toList();
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 }

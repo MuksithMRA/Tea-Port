@@ -49,7 +49,7 @@ class UserManagementService {
         role: UserRole.admin,
       );
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -64,7 +64,7 @@ class UserManagementService {
           .map((doc) => UserModel.fromMap(doc.data))
           .toList();
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -80,7 +80,7 @@ class UserManagementService {
       // Note: Deleting the actual user account requires admin privileges
       // and should be done through the Appwrite console or a server-side function
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 }

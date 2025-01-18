@@ -41,6 +41,7 @@ class _JanitorScreenState extends State<JanitorScreen> {
                     final authService = Provider.of<AuthService>(context, listen: false);
                     await authService.signOut();
                     if (!mounted) return;
+                    // ignore: use_build_context_synchronously
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );

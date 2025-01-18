@@ -6,7 +6,9 @@
             "$id": "sendPushNotification",
             "name": "Send Push Notification",
             "runtime": "node-18.0",
-            "execute": ["any"],
+            "execute": [
+                "any"
+            ],
             "events": [],
             "schedule": "",
             "timeout": 15,

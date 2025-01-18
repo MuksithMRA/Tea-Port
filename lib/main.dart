@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Tea Service App',
+        title: 'Tea Port',
         theme: ThemeData(
           primarySwatch: Colors.brown,
           useMaterial3: true,

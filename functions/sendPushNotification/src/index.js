@@ -14,8 +14,15 @@ module.exports = async function (req, res) {
                 credential: admin.credential.cert(config.firebase)
             });
         }
+        console.log(req.req.body);
 
-        const payload = JSON.parse(req.payload);
+        // Handle payload based on request type
+        const payload = typeof req.req.body === 'string' ? JSON.parse(req.req.body) : req.req.body;
+
+        if (!payload) {
+            throw new Error('No payload provided');
+        }
+
         const { token, title, body, data } = payload;
 
         // Validate required fields
@@ -34,7 +41,7 @@ module.exports = async function (req, res) {
             android: {
                 priority: 'high',
                 notification: {
-                    channelId: 'tea_serve_channel',
+                    channelId: 'tea_port_channel',
                     priority: 'high',
                     sound: 'default',
                     clickAction: 'FLUTTER_NOTIFICATION_CLICK'
@@ -56,18 +63,15 @@ module.exports = async function (req, res) {
 
         // Send the message
         const response = await admin.messaging().send(message);
-        
-        return res.json({
+
+        return {
             success: true,
             message: 'Push notification sent successfully',
             messageId: response
-        });
+        };
     } catch (error) {
         console.error('Error sending push notification:', error);
-        
-        return res.json({
-            success: false,
-            message: error.message || 'Error sending push notification'
-        }, 500);
+
+        throw new Error(error.message || 'Error sending push notification');
     }
 };

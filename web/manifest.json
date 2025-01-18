@@ -1,6 +1,6 @@
 {
-    "name": "tea_serve",
-    "short_name": "tea_serve",
+    "name": "tea_port",
+    "short_name": "tea_port",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

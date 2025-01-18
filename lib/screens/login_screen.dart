@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Tea Service App',
+                  'Tea Port App',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

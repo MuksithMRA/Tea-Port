@@ -25,14 +25,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkInitialState() async {
     if (!mounted) return;
-    
+
     final authService = context.read<AuthService>();
     final userManagementService = UserManagementService();
 
     try {
       // First check if any users exist
       final users = await userManagementService.getAllUsers();
-      
+
       if (!mounted) return;
 
       if (users.isEmpty) {
@@ -45,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       // Check if there's an existing session
       await authService.checkAuthStatus();
-      
+
       if (!mounted) return;
 
       if (authService.currentUser == null) {
@@ -58,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       // Route based on user role
       if (!mounted) return;
-      
+
       final userData = authService.userData;
       if (userData == null) {
         Navigator.of(context).pushReplacement(
@@ -70,17 +70,19 @@ class _SplashScreenState extends State<SplashScreen> {
       switch (userData.role) {
         case UserRole.employee:
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) =>  EmployeeScreen(
-              userId: authService.currentUser!.$id,
-              userName: authService.currentUser!.name,
-            )),
+            MaterialPageRoute(
+                builder: (_) => EmployeeScreen(
+                      userId: authService.currentUser!.$id,
+                      userName: authService.currentUser!.name,
+                    )),
           );
           break;
         case UserRole.janitor:
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) =>  JanitorScreen(
-              userName:  authService.currentUser!.name,
-            )),
+            MaterialPageRoute(
+                builder: (_) => JanitorScreen(
+                      userName: authService.currentUser!.name,
+                    )),
           );
           break;
         case UserRole.admin:

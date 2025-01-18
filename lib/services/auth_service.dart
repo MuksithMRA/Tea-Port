@@ -36,7 +36,7 @@ class AuthService extends ChangeNotifier {
       _currentUser = null;
       _userData = null;
       notifyListeners();
-      throw e;
+      rethrow;
     }
   }
 
@@ -54,7 +54,7 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       _userData = null;
       notifyListeners();
-      throw e;
+      rethrow;
     }
   }
 
