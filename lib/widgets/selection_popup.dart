@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import '../models/tea_order.dart';
 import '../providers/drink_selection_provider.dart';
 import '../utils/drink_utils.dart';
+import '../utils/voice_utils.dart';
 
-class SelectionPopup extends StatelessWidget {
-  final Function(DrinkType) onPlaceOrder;
+class SelectionPopup extends StatefulWidget {
+  final Function(DrinkType, String?) onPlaceOrder;
   final bool isLoading;
 
   const SelectionPopup({
@@ -13,6 +14,39 @@ class SelectionPopup extends StatelessWidget {
     required this.onPlaceOrder,
     required this.isLoading,
   });
+
+  @override
+  State<SelectionPopup> createState() => _SelectionPopupState();
+}
+
+class _SelectionPopupState extends State<SelectionPopup> {
+  bool _isRecording = false;
+  String? _recordedAudio;
+
+  Future<void> _toggleRecording() async {
+    if (!_isRecording) {
+      final hasPermission = await VoiceUtils.requestPermissions();
+      if (!hasPermission) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission denied')),
+        );
+        return;
+      }
+
+      setState(() => _isRecording = true);
+      await VoiceUtils.startRecording();
+    } else {
+      _recordedAudio = await VoiceUtils.stopRecording();
+      setState(() => _isRecording = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    VoiceUtils.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +91,9 @@ class SelectionPopup extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
-                          selectedDrink != null ? getDrinkIcon(selectedDrink) : Icons.local_cafe,
+                          selectedDrink != null
+                              ? getDrinkIcon(selectedDrink)
+                              : Icons.local_cafe,
                           color: Colors.white,
                           size: 24,
                         ),
@@ -108,13 +144,62 @@ class SelectionPopup extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      if (selectedDrink != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Column(
+                            children: [
+                              const Text(
+                                'Add a voice note (optional)',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_recordedAudio != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.play_arrow),
+                                      onPressed: () =>
+                                          VoiceUtils.playAudio(_recordedAudio!),
+                                    ),
+                                  IconButton(
+                                    icon: Icon(
+                                        _isRecording ? Icons.stop : Icons.mic),
+                                    color: _isRecording ? Colors.red : null,
+                                    onPressed: _toggleRecording,
+                                  ),
+                                  if (_recordedAudio != null)
+                                    IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      onPressed: () =>
+                                          setState(() => _recordedAudio = null),
+                                    ),
+                                ],
+                              ),
+                              if (_recordedAudio != null)
+                                const Text(
+                                  'Voice note recorded',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: isLoading || selectedDrink == null
+                          onPressed: widget.isLoading || selectedDrink == null
                               ? null
-                              : () => onPlaceOrder(selectedDrink),
+                              : () {
+                                  widget.onPlaceOrder(
+                                      selectedDrink, _recordedAudio);
+                                  provider.selectDrink(null);
+                                  setState(() => _recordedAudio = null);
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF8B4513),
                             foregroundColor: Colors.white,
@@ -125,13 +210,14 @@ class SelectionPopup extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: isLoading
+                          child: widget.isLoading
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
                                   ),
                                 )
                               : const Text(
@@ -144,6 +230,12 @@ class SelectionPopup extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [],
                   ),
                 ),
               ],

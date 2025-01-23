@@ -6,6 +6,7 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'providers/drink_selection_provider.dart';
+import 'providers/audio_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => DrinkSelectionProvider()),
+        ChangeNotifierProvider(create: (_) => AudioProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

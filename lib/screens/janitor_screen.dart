@@ -1,8 +1,10 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/tea_order.dart';
 import '../services/auth_service.dart';
 import '../services/order_service.dart';
+import '../providers/audio_provider.dart';
 import 'login_screen.dart';
 
 class JanitorScreen extends StatefulWidget {
@@ -19,6 +21,11 @@ class JanitorScreen extends StatefulWidget {
 
 class _JanitorScreenState extends State<JanitorScreen> {
   final OrderService orderService = OrderService();
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,11 +93,13 @@ class _JanitorScreenState extends State<JanitorScreen> {
                     child: IconButton(
                       icon: const Icon(Icons.logout),
                       onPressed: () async {
-                        final authService = Provider.of<AuthService>(context, listen: false);
+                        final authService =
+                            Provider.of<AuthService>(context, listen: false);
                         await authService.signOut();
                         if (!mounted) return;
                         Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          MaterialPageRoute(
+                              builder: (_) => const LoginScreen()),
                         );
                       },
                     ),
@@ -132,10 +141,13 @@ class _JanitorScreenState extends State<JanitorScreen> {
                                         const SizedBox(width: 8),
                                         Text(
                                           'Pending Orders',
-                                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: const Color(0xFF8B4513),
-                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: const Color(0xFF8B4513),
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -234,12 +246,14 @@ class _JanitorScreenState extends State<JanitorScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             CircleAvatar(
-                                              backgroundColor: _getStatusColor(order.status),
+                                              backgroundColor:
+                                                  _getStatusColor(order.status),
                                               child: Icon(
                                                 _getDrinkIcon(order.drinkType),
                                                 color: Colors.white,
@@ -248,12 +262,17 @@ class _JanitorScreenState extends State<JanitorScreen> {
                                             const SizedBox(width: 12),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    order.drinkType.toString().split('.').last,
+                                                    order.drinkType
+                                                        .toString()
+                                                        .split('.')
+                                                        .last,
                                                     style: const TextStyle(
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                       fontSize: 16,
                                                     ),
                                                   ),
@@ -265,36 +284,107 @@ class _JanitorScreenState extends State<JanitorScreen> {
                                                       fontSize: 14,
                                                     ),
                                                   ),
+                                                  if (order.note?.isNotEmpty ??
+                                                      false)
+                                                    Row(
+                                                      children: [
+                                                        Text(
+                                                          'Voice Note: ',
+                                                          style: TextStyle(
+                                                            color: Colors
+                                                                .grey[600],
+                                                            fontSize: 12,
+                                                          ),
+                                                        ),
+                                                        StreamBuilder<
+                                                            PlayerState>(
+                                                          stream: context
+                                                              .read<
+                                                                  AudioProvider>()
+                                                              .playerStateStream,
+                                                          builder: (context,
+                                                              snapshot) {
+                                                            return Consumer<
+                                                                AudioProvider>(
+                                                              builder: (context,
+                                                                  audioProvider,
+                                                                  _) {
+                                                                final isPlaying = audioProvider
+                                                                            .currentlyPlayingOrderId ==
+                                                                        order
+                                                                            .id &&
+                                                                    snapshot.data ==
+                                                                        PlayerState
+                                                                            .playing;
+                                                                return IconButton(
+                                                                  icon: Icon(
+                                                                    isPlaying
+                                                                        ? Icons
+                                                                            .stop
+                                                                        : Icons
+                                                                            .play_arrow,
+                                                                    size: 16,
+                                                                    color: isPlaying
+                                                                        ? Colors
+                                                                            .red
+                                                                        : Colors
+                                                                            .grey[600],
+                                                                  ),
+                                                                  onPressed:
+                                                                      () {
+                                                                    audioProvider.playAudio(
+                                                                        order
+                                                                            .id,
+                                                                        order
+                                                                            .note!);
+                                                                  },
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                );
+                                                              },
+                                                            );
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  Text(
+                                                    'Ordered: ${_formatDateTime(order.orderTime)}',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
                                                 ],
                                               ),
                                             ),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
                                                 horizontal: 12,
                                                 vertical: 6,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: _getStatusColor(order.status).withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(12),
+                                                color: _getStatusColor(
+                                                        order.status)
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
                                               child: Text(
-                                                order.status.toString().split('.').last,
+                                                order.status
+                                                    .toString()
+                                                    .split('.')
+                                                    .last,
                                                 style: TextStyle(
-                                                  color: _getStatusColor(order.status),
+                                                  color: _getStatusColor(
+                                                      order.status),
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 12,
                                                 ),
                                               ),
                                             ),
                                           ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          'Ordered: ${_formatDateTime(order.orderTime)}',
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 12,
-                                          ),
                                         ),
                                       ],
                                     ),
@@ -321,8 +411,10 @@ class _JanitorScreenState extends State<JanitorScreen> {
           }
 
           final orders = snapshot.data!;
-          final hasPendingOrders = orders.any((o) => o.status == OrderStatus.pending);
-          final hasPreparingOrders = orders.any((o) => o.status == OrderStatus.preparing);
+          final hasPendingOrders =
+              orders.any((o) => o.status == OrderStatus.pending);
+          final hasPreparingOrders =
+              orders.any((o) => o.status == OrderStatus.preparing);
 
           if (!hasPendingOrders && !hasPreparingOrders) {
             return const SizedBox.shrink();
@@ -337,7 +429,8 @@ class _JanitorScreenState extends State<JanitorScreen> {
                   child: FloatingActionButton.extended(
                     heroTag: 'start_preparing',
                     onPressed: () {
-                      final pendingOrder = orders.firstWhere((o) => o.status == OrderStatus.pending);
+                      final pendingOrder = orders
+                          .firstWhere((o) => o.status == OrderStatus.pending);
                       _updateOrderStatus(pendingOrder, OrderStatus.preparing);
                     },
                     backgroundColor: Colors.orange,
@@ -349,7 +442,8 @@ class _JanitorScreenState extends State<JanitorScreen> {
                 FloatingActionButton.extended(
                   heroTag: 'mark_completed',
                   onPressed: () {
-                    final preparingOrder = orders.firstWhere((o) => o.status == OrderStatus.preparing);
+                    final preparingOrder = orders
+                        .firstWhere((o) => o.status == OrderStatus.preparing);
                     _updateOrderStatus(preparingOrder, OrderStatus.completed);
                   },
                   backgroundColor: Colors.green,
@@ -409,7 +503,8 @@ class _JanitorScreenState extends State<JanitorScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Order ${newStatus.toString().split('.').last.toLowerCase()}'),
+          content: Text(
+              'Order ${newStatus.toString().split('.').last.toLowerCase()}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -426,7 +521,7 @@ class _JanitorScreenState extends State<JanitorScreen> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-           '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   Color _getStatusColor(OrderStatus status) {
@@ -446,10 +541,14 @@ class _JanitorScreenState extends State<JanitorScreen> {
     switch (type) {
       case DrinkType.tea:
         return Icons.emoji_food_beverage;
-      case DrinkType.milkTea:
+      case DrinkType.milk:
         return Icons.coffee;
       case DrinkType.coffee:
         return Icons.coffee_maker;
+      case DrinkType.plainTea:
+        return Icons.emoji_food_beverage;
+      case DrinkType.milkCoffee:
+        return Icons.coffee;
     }
   }
 }

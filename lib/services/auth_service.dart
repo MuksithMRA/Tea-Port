@@ -1,4 +1,3 @@
-
 import 'package:appwrite/models.dart' as models;
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
@@ -61,6 +60,12 @@ class AuthService extends ChangeNotifier {
   Future<void> signOut() async {
     try {
       await _appwrite.account.deleteSession(sessionId: 'current');
+      await _appwrite.databases.updateDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.usersCollectionId,
+        documentId: _currentUser!.$id,
+        data: {'fcmToken': ''},
+      );
     } finally {
       _currentUser = null;
       _userData = null;

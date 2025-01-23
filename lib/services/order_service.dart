@@ -14,6 +14,8 @@ class OrderService {
       final orderData = order.toMap();
       orderData['id'] = documentId; // Set the ID before creating the document
 
+      debugPrint('Order data: $orderData');
+
       await _appwrite.databases.createDocument(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.ordersCollectionId,

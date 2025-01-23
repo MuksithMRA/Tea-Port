@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/tea_order.dart';
+import '../../utils/voice_utils.dart';
 
 class AdminOrderCard extends StatelessWidget {
   final TeaOrder order;
@@ -28,12 +29,36 @@ class AdminOrderCard extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: Text(
-          'Ordered: ${_formatDateTime(order.orderTime)}',
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ordered: ${_formatDateTime(order.orderTime)}',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+            ),
+            if (order.note?.isNotEmpty ?? false)
+              Row(
+                children: [
+                  Text(
+                    'Voice Note: ',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.play_arrow, size: 16),
+                    onPressed: () => VoiceUtils.playAudio(order.note!),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    color: Colors.grey[600],
+                  ),
+                ],
+              ),
+          ],
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(
@@ -79,10 +104,14 @@ class AdminOrderCard extends StatelessWidget {
     switch (type) {
       case DrinkType.tea:
         return Icons.emoji_food_beverage;
-      case DrinkType.milkTea:
+      case DrinkType.milk:
         return Icons.coffee;
       case DrinkType.coffee:
         return Icons.coffee_maker;
+      case DrinkType.plainTea:
+        return Icons.emoji_food_beverage;
+      case DrinkType.milkCoffee:
+        return Icons.coffee;
     }
   }
 }

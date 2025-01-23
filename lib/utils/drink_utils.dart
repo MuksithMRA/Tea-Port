@@ -5,10 +5,14 @@ IconData getDrinkIcon(DrinkType type) {
   switch (type) {
     case DrinkType.tea:
       return Icons.emoji_food_beverage;
-    case DrinkType.milkTea:
+    case DrinkType.milk:
       return Icons.coffee;
     case DrinkType.coffee:
       return Icons.coffee_maker;
+    case DrinkType.plainTea:
+      return Icons.emoji_food_beverage;
+    case DrinkType.milkCoffee:
+      return Icons.coffee;
   }
 }
 

@@ -26,8 +26,9 @@ class EmployeeScreen extends StatefulWidget {
 class _EmployeeScreenState extends State<EmployeeScreen> {
   final orderService = OrderService();
   bool _isPlacingOrder = false;
+  final _noteController = TextEditingController();
 
-  Future<void> _placeOrder(BuildContext context, DrinkType drinkType) async {
+  Future<void> _placeOrder(BuildContext context, DrinkType drinkType, String? voiceNote) async {
     if (_isPlacingOrder) return;
     
     setState(() {
@@ -43,6 +44,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
           orderTime: DateTime.now(),
           status: OrderStatus.pending,
           drinkType: drinkType,
+          note: voiceNote,
         ),
       );
       if (!mounted) return;
@@ -68,6 +70,12 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
   }
 
   @override
@@ -230,7 +238,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             ),
           ),
           SelectionPopup(
-            onPlaceOrder: (drinkType) => _placeOrder(context, drinkType),
+            onPlaceOrder: (drinkType, voiceNote) => _placeOrder(context, drinkType, voiceNote),
             isLoading: _isPlacingOrder,
           ),
         ],

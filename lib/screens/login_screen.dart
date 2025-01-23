@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tea_port/services/notification_service.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import 'admin_screen.dart';
@@ -40,6 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (!mounted) return;
+
+        if (!kIsWeb) {
+          NotificationService notificationService = NotificationService();
+          notificationService.initialize();
+        }
 
         // Navigate based on user role
         final userData = authService.userData;
@@ -158,18 +165,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                 labelStyle: TextStyle(
                                   color: Colors.grey[700],
                                 ),
-                                prefixIcon: const Icon(Icons.email, color: Color(0xFF8B4513)),
+                                prefixIcon: const Icon(Icons.email,
+                                    color: Color(0xFF8B4513)),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey[300]!),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey[300]!),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Color(0xFF8B4513), width: 2),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFF8B4513), width: 2),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
@@ -193,18 +204,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                 labelStyle: TextStyle(
                                   color: Colors.grey[700],
                                 ),
-                                prefixIcon: const Icon(Icons.lock, color: Color(0xFF8B4513)),
+                                prefixIcon: const Icon(Icons.lock,
+                                    color: Color(0xFF8B4513)),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey[300]!),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey[300]!),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Color(0xFF8B4513), width: 2),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFF8B4513), width: 2),
                                 ),
                                 filled: true,
                                 fillColor: Colors.white,
@@ -236,7 +251,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         height: 24,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
                                         ),
                                       )
                                     : const Text(

@@ -37,6 +37,11 @@ dependencies:
   firebase_messaging: ^14.7.10
   flutter_local_notifications: ^15.1.0
   shared_preferences: ^2.2.2
+  record: ^4.4.4
+  audioplayers: ^5.2.1
+  permission_handler: ^11.0.1
+  path_provider: ^2.1.1
+  http: ^0.13.6
 
 dev_dependencies:
   flutter_test:

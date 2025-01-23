@@ -1,6 +1,6 @@
 enum OrderStatus { pending, preparing, completed, cancelled }
 
-enum DrinkType { tea, milkTea, coffee }
+enum DrinkType { tea, milk, coffee, plainTea, milkCoffee }
 
 class TeaOrder {
   final String id;
@@ -9,6 +9,7 @@ class TeaOrder {
   final DateTime orderTime;
   final OrderStatus status;
   final DrinkType drinkType;
+  final String? note;
   final bool isScheduled;
   final DateTime? scheduledTime;
 
@@ -18,6 +19,7 @@ class TeaOrder {
     required this.userName,
     required this.orderTime,
     required this.status,
+    this.note,
     required this.drinkType,
     this.isScheduled = false,
     this.scheduledTime,
@@ -28,12 +30,13 @@ class TeaOrder {
       id: map['\$id'] ?? map['id'] ?? '',
       userId: map['userId'] ?? '',
       userName: map['userName'] ?? '',
+      note: map['note'] ?? '',
       orderTime: DateTime.parse(map['orderTime']),
       status: OrderStatus.values.firstWhere(
         (e) => e.toString().split('.').last == map['status'],
         orElse: () => OrderStatus.pending,
       ),
-      drinkType: map['drinkType'] != null 
+      drinkType: map['drinkType'] != null
           ? DrinkType.values.firstWhere(
               (e) => e.toString().split('.').last == map['drinkType'],
               orElse: () => DrinkType.tea,
@@ -51,6 +54,7 @@ class TeaOrder {
       'id': id,
       'userId': userId,
       'userName': userName,
+      'note': note,
       'orderTime': orderTime.toIso8601String(),
       'status': status.toString().split('.').last,
       'drinkType': drinkType.toString().split('.').last,
