@@ -196,6 +196,7 @@ class NotificationService {
 
   Future<void> sendJanitorNotification(TeaOrder order) async {
     try {
+      debugPrint('Sending janitor notification for order ${order.id}');
       // Get all users with janitor role
       final janitors = await AppwriteService().databases.listDocuments(
         databaseId: AppwriteService.databaseId,
@@ -206,6 +207,8 @@ class NotificationService {
       // Send notification to each janitor
       for (final janitor in janitors.documents) {
         final fcmToken = janitor.data['fcmToken'];
+        debugPrint(
+            'Sending janitor notification to ${janitor.data['fcmToken']}');
         if (fcmToken != null) {
           await AppwriteService().functions.createExecution(
                 functionId: 'sendPushNotification',
@@ -231,10 +234,10 @@ class NotificationService {
     try {
       // Get the employee who placed the order
       final employee = await AppwriteService().databases.getDocument(
-        databaseId: AppwriteService.databaseId,
-        collectionId: AppwriteService.usersCollectionId,
-        documentId: order.userId,
-      );
+            databaseId: AppwriteService.databaseId,
+            collectionId: AppwriteService.usersCollectionId,
+            documentId: order.userId,
+          );
 
       final fcmToken = employee.data['fcmToken'];
       if (fcmToken != null) {

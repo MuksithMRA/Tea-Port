@@ -31,8 +31,33 @@
 
   <title>Tea Port</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjJFBvOClSS9imP9mhb8hDCQ4iLkyJDu8",
+      authDomain: "medoment-tea-serve.firebaseapp.com",
+      projectId: "medoment-tea-serve",
+      storageBucket: "medoment-tea-serve.firebasestorage.app",
+      messagingSenderId: "47791069713",
+      appId: "1:47791069713:web:81e6fafe094631aae26fb0"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        });
+      }
+      </script>
 </body>
 </html>

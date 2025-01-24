@@ -47,6 +47,11 @@ module.exports = async function (req, res) {
                     clickAction: 'FLUTTER_NOTIFICATION_CLICK'
                 }
             },
+            webpush: {
+                notification: {
+                    requireInteraction: true
+                }
+            },
             apns: {
                 headers: {
                     'apns-priority': '10'

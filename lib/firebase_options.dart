@@ -47,29 +47,27 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'replace-this-with-your-api-key',
-    appId: '1:1009124765268:web:beebe0d88efb24edec47c1',
-    messagingSenderId: '1009124765268',
-    projectId: 'internal-ht',
-    authDomain: 'internal-ht.firebaseapp.com',
-    storageBucket: 'internal-ht.firebasestorage.app',
-  );
+      apiKey: "AIzaSyDjJFBvOClSS9imP9mhb8hDCQ4iLkyJDu8",
+      authDomain: "medoment-tea-serve.firebaseapp.com",
+      projectId: "medoment-tea-serve",
+      storageBucket: "medoment-tea-serve.firebasestorage.app",
+      messagingSenderId: "47791069713",
+      appId: "1:47791069713:web:81e6fafe094631aae26fb0");
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'replace-this-with-your-api-key',
-    appId: '1:1009124765268:android:a9b3a99317aa3c58ec47c1',
-    messagingSenderId: '1009124765268',
-    projectId: 'internal-ht',
-    storageBucket: 'internal-ht.firebasestorage.app',
-  );
+      apiKey: "AIzaSyDjJFBvOClSS9imP9mhb8hDCQ4iLkyJDu8",
+      authDomain: "medoment-tea-serve.firebaseapp.com",
+      projectId: "medoment-tea-serve",
+      storageBucket: "medoment-tea-serve.firebasestorage.app",
+      messagingSenderId: "47791069713",
+      appId: "1:47791069713:web:81e6fafe094631aae26fb0");
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'replace-this-with-your-api-key',
-    appId: '1:1009124765268:ios:66143272ad765a48ec47c1',
-    messagingSenderId: '1009124765268',
-    projectId: 'internal-ht',
-    storageBucket: 'internal-ht.firebasestorage.app',
+    apiKey: 'AIzaSyDjJFBvOClSS9imP9mhb8hDCQ4iLkyJDu8',
+    appId: '1:47791069713:ios:66143272ad765a48e26fb0',
+    messagingSenderId: '47791069713',
+    projectId: 'medoment-tea-serve',
+    storageBucket: 'medoment-tea-serve.firebasestorage.app',
     iosBundleId: 'com.example.teaServe',
   );
-
 }
