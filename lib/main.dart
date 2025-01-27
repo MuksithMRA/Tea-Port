@@ -8,6 +8,7 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'providers/drink_selection_provider.dart';
+import 'providers/group_order_provider.dart';
 
 var navkey = GlobalKey<NavigatorState>();
 void main() async {
@@ -70,6 +71,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => DrinkSelectionProvider()),
+        ChangeNotifierProvider(create: (_) => GroupOrderProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
