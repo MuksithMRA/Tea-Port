@@ -5,6 +5,7 @@ import '../services/order_service.dart';
 import '../models/tea_order.dart';
 import '../screens/user_management_screen.dart';
 import 'login_screen.dart';
+import '../widgets/order_card.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -15,6 +16,10 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> {
   final OrderService _orderService = OrderService();
+
+  void _showOrderDetails(TeaOrder order) {
+    // Implement order details display logic here
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,72 +123,57 @@ class _AdminScreenState extends State<AdminScreen> {
                     );
                   }
 
-                  final orders = snapshot.data ?? [];
-
-                  if (orders.isEmpty) {
-                    return SliverFillRemaining(
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const SliverFillRemaining(
                       child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.no_drinks,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No orders yet',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: Text('No orders yet'),
                       ),
                     );
                   }
 
+                  final orders = snapshot.data!;
                   return SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          if (index == 0) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.history,
-                                        color: Color(0xFF8B4513),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'All Orders',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
+                    padding: const EdgeInsets.all(16.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 800),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: orders.length,
+                            itemBuilder: (context, index) {
+                              final order = orders[index];
+                              return OrderCard(
+                                order: order,
+                                isFirstOrder: index == 0,
+                                onTap: () => _showOrderDetails(order),
+                                customAction: order.status == OrderStatus.pending || order.status == OrderStatus.preparing
+                                    ? SizedBox(
+                                        height: 48,
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => _showOrderDetails(order),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: _getStatusColor(order.status),
+                                            side: BorderSide(
+                                              color: _getStatusColor(order.status),
+                                            ),
+                                          ),
+                                          icon: Icon(_getActionIcon(order.status)),
+                                          label: Text(
+                                            _getActionText(order.status),
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                _buildOrderCard(orders[index]),
-                              ],
-                            );
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: _buildOrderCard(orders[index]),
-                          );
-                        },
-                        childCount: orders.length,
+                                      )
+                                    : null,
+                              );
+                            },
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -194,11 +184,6 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
       ),
     );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   Color _getStatusColor(OrderStatus status) {
@@ -214,65 +199,27 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
-  IconData _getDrinkIcon(DrinkType type) {
-    switch (type) {
-      case DrinkType.tea:
-        return Icons.emoji_food_beverage;
-      case DrinkType.milk:
-        return Icons.coffee;
-      case DrinkType.coffee:
+  IconData _getActionIcon(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
         return Icons.coffee_maker;
-      case DrinkType.plainTea:
-        return Icons.emoji_food_beverage;
-      case DrinkType.milkCoffee:
-        return Icons.coffee;
+      case OrderStatus.preparing:
+        return Icons.check_circle;
+      case OrderStatus.completed:
+      case OrderStatus.cancelled:
+        return Icons.refresh;
     }
   }
 
-  Widget _buildOrderCard(TeaOrder order) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getStatusColor(order.status),
-          child: Icon(
-            _getDrinkIcon(order.drinkType),
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          order.userName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(
-          'Ordered: ${_formatDateTime(order.orderTime)}',
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 4,
-          ),
-          decoration: BoxDecoration(
-            color: _getStatusColor(order.status).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            order.status.toString().split('.').last,
-            style: TextStyle(
-              color: _getStatusColor(order.status),
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ),
-    );
+  String _getActionText(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return 'Start Preparing';
+      case OrderStatus.preparing:
+        return 'Mark as Complete';
+      case OrderStatus.completed:
+      case OrderStatus.cancelled:
+        return 'New Order';
+    }
   }
 }

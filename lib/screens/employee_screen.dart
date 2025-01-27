@@ -5,7 +5,7 @@ import '../providers/drink_selection_provider.dart';
 import '../services/auth_service.dart';
 import '../services/order_service.dart';
 import '../widgets/drink_grid.dart';
-import '../widgets/order_list.dart';
+import '../widgets/order_card.dart';
 import '../widgets/selection_popup.dart';
 import 'login_screen.dart';
 
@@ -204,34 +204,49 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                     ),
                   ),
                   SliverToBoxAdapter(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 800),
-                        child: const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.history,
-                                color: Color(0xFF8B4513),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Your Orders',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 800),
+                          child: StreamBuilder<List<TeaOrder>>(
+                            stream: orderService.getEmployeeOrders(widget.userId),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Text('Error: ${snapshot.error}'),
+                                );
+                              }
+
+                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const Center(
+                                  child: Text('No orders yet'),
+                                );
+                              }
+
+                              final orders = snapshot.data!;
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: orders.length,
+                                itemBuilder: (context, index) {
+                                  final order = orders[index];
+                                  return OrderCard(
+                                    order: order,
+                                    isFirstOrder: index == 0,
+                                    showActions: false,
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  OrderList(
-                    userId: widget.userId,
-                    orderService: orderService,
                   ),
                 ],
               ),

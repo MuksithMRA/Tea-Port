@@ -17,8 +17,9 @@ class DrinkCard extends StatelessWidget {
     return Consumer<DrinkSelectionProvider>(
       builder: (context, provider, _) {
         final isSelected = provider.selectedDrink == drinkType;
+        
         return Card(
-          elevation: isSelected ? 8 : 2,
+          elevation: isSelected ? 4 : 1,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
@@ -29,28 +30,43 @@ class DrinkCard extends StatelessWidget {
           child: InkWell(
             onTap: () => provider.selectDrink(isSelected ? null : drinkType),
             borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    getDrinkIcon(drinkType),
-                    size: 32,
-                    color: isSelected ? const Color(0xFF8B4513) : Colors.grey[700],
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        getDrinkIcon(drinkType),
+                        size: 32,
+                        color: isSelected ? const Color(0xFF8B4513) : Colors.grey[700],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        drinkType.toString().split('.').last.toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? const Color(0xFF8B4513) : Colors.grey[800],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    drinkType.toString().split('.').last,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? const Color(0xFF8B4513) : Colors.black87,
+                ),
+                if (isSelected)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: const Color(0xFF8B4513),
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
         );

@@ -8,13 +8,14 @@ class DrinkGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
+      padding: const EdgeInsets.all(8),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.5,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        childAspectRatio: 1.3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
       ),
       itemCount: DrinkType.values.length,
       itemBuilder: (context, index) {

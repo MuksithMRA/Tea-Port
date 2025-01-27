@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../models/tea_order.dart';
-import '../../utils/voice_utils.dart';
 
 class AdminOrderCard extends StatelessWidget {
   final TeaOrder order;
@@ -40,23 +39,12 @@ class AdminOrderCard extends StatelessWidget {
               ),
             ),
             if (order.note?.isNotEmpty ?? false)
-              Row(
-                children: [
-                  Text(
-                    'Voice Note: ',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.play_arrow, size: 16),
-                    onPressed: () => VoiceUtils.playAudio(order.note!),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    color: Colors.grey[600],
-                  ),
-                ],
+              Text(
+                order.note!,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
               ),
           ],
         ),

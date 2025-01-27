@@ -1,10 +1,8 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/tea_order.dart';
 import '../services/auth_service.dart';
 import '../services/order_service.dart';
-import '../providers/audio_provider.dart';
 import 'login_screen.dart';
 
 class JanitorScreen extends StatefulWidget {
@@ -21,11 +19,6 @@ class JanitorScreen extends StatefulWidget {
 
 class _JanitorScreenState extends State<JanitorScreen> {
   final OrderService orderService = OrderService();
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,13 +86,11 @@ class _JanitorScreenState extends State<JanitorScreen> {
                     child: IconButton(
                       icon: const Icon(Icons.logout),
                       onPressed: () async {
-                        final authService =
-                            Provider.of<AuthService>(context, listen: false);
+                        final authService = Provider.of<AuthService>(context, listen: false);
                         await authService.signOut();
                         if (!mounted) return;
                         Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                              builder: (_) => const LoginScreen()),
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
                         );
                       },
                     ),
@@ -234,162 +225,247 @@ class _JanitorScreenState extends State<JanitorScreen> {
                             itemCount: orders.length,
                             itemBuilder: (context, index) {
                               final order = orders[index];
-                              return Card(
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                margin: const EdgeInsets.only(bottom: 16),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () => _showOrderActions(order),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
+                              final isFirstOrder = index == 0;
+                              final isPendingOrPreparing = order.status == OrderStatus.pending || order.status == OrderStatus.preparing;
+                              
+                              return Stack(
+                                children: [
+                                  Card(
+                                    elevation: isPendingOrPreparing ? 4 : 2,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      side: isPendingOrPreparing 
+                                          ? BorderSide(
+                                              color: _getStatusColor(order.status),
+                                              width: 2,
+                                            )
+                                          : BorderSide.none,
+                                    ),
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(16),
+                                      onTap: () => _showOrderActions(order),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            CircleAvatar(
-                                              backgroundColor:
-                                                  _getStatusColor(order.status),
-                                              child: Icon(
-                                                _getDrinkIcon(order.drinkType),
-                                                color: Colors.white,
-                                              ),
+                                            Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: _getStatusColor(order.status).withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Icon(
+                                                    _getDrinkIcon(order.drinkType),
+                                                    color: _getStatusColor(order.status),
+                                                    size: 28,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 16),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child: Text(
+                                                              order.drinkType.toString().split('.').last,
+                                                              style: const TextStyle(
+                                                                fontWeight: FontWeight.bold,
+                                                                fontSize: 18,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Container(
+                                                            padding: const EdgeInsets.symmetric(
+                                                              horizontal: 12,
+                                                              vertical: 6,
+                                                            ),
+                                                            decoration: BoxDecoration(
+                                                              color: _getStatusColor(order.status).withOpacity(0.1),
+                                                              borderRadius: BorderRadius.circular(12),
+                                                              border: Border.all(
+                                                                color: _getStatusColor(order.status).withOpacity(0.5),
+                                                                width: 1,
+                                                              ),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              children: [
+                                                                Icon(
+                                                                  _getStatusIcon(order.status),
+                                                                  size: 16,
+                                                                  color: _getStatusColor(order.status),
+                                                                ),
+                                                                const SizedBox(width: 4),
+                                                                Text(
+                                                                  order.status.toString().split('.').last,
+                                                                  style: TextStyle(
+                                                                    color: _getStatusColor(order.status),
+                                                                    fontWeight: FontWeight.bold,
+                                                                    fontSize: 14,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const SizedBox(height: 8),
+                                                      Row(
+                                                        children: [
+                                                          CircleAvatar(
+                                                            radius: 12,
+                                                            backgroundColor: const Color(0xFF8B4513).withOpacity(0.1),
+                                                            child: Text(
+                                                              order.userName[0].toUpperCase(),
+                                                              style: const TextStyle(
+                                                                color: Color(0xFF8B4513),
+                                                                fontSize: 12,
+                                                                fontWeight: FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(width: 8),
+                                                          Expanded(
+                                                            child: Text(
+                                                              order.userName,
+                                                              style: TextStyle(
+                                                                color: Colors.grey[800],
+                                                                fontSize: 14,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Icon(
+                                                            Icons.schedule,
+                                                            size: 14,
+                                                            color: Colors.grey[600],
+                                                          ),
+                                                          const SizedBox(width: 4),
+                                                          Text(
+                                                            _formatDateTime(order.orderTime),
+                                                            style: TextStyle(
+                                                              color: Colors.grey[600],
+                                                              fontSize: 14,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    order.drinkType
-                                                        .toString()
-                                                        .split('.')
-                                                        .last,
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16,
-                                                    ),
+                                            if (order.note?.isNotEmpty ?? false) ...[
+                                              const SizedBox(height: 12),
+                                              Container(
+                                                padding: const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[50],
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: Colors.grey[200]!,
+                                                    width: 1,
                                                   ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    'Ordered by: ${order.userName}',
-                                                    style: TextStyle(
+                                                ),
+                                                child: Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.note,
+                                                      size: 16,
                                                       color: Colors.grey[600],
-                                                      fontSize: 14,
                                                     ),
-                                                  ),
-                                                  if (order.note?.isNotEmpty ??
-                                                      false)
-                                                    Row(
-                                                      children: [
-                                                        Text(
-                                                          'Voice Note: ',
-                                                          style: TextStyle(
-                                                            color: Colors
-                                                                .grey[600],
-                                                            fontSize: 12,
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        order.note!,
+                                                        style: TextStyle(
+                                                          color: Colors.grey[800],
+                                                          fontSize: 14,
+                                                          height: 1.3,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            if (isPendingOrPreparing) ...[
+                                              const SizedBox(height: 16),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: SizedBox(
+                                                      height: 48,
+                                                      child: OutlinedButton.icon(
+                                                        onPressed: () => _showOrderActions(order),
+                                                        style: OutlinedButton.styleFrom(
+                                                          foregroundColor: _getStatusColor(order.status),
+                                                          side: BorderSide(
+                                                            color: _getStatusColor(order.status),
                                                           ),
                                                         ),
-                                                        StreamBuilder<
-                                                            PlayerState>(
-                                                          stream: context
-                                                              .read<
-                                                                  AudioProvider>()
-                                                              .playerStateStream,
-                                                          builder: (context,
-                                                              snapshot) {
-                                                            return Consumer<
-                                                                AudioProvider>(
-                                                              builder: (context,
-                                                                  audioProvider,
-                                                                  _) {
-                                                                final isPlaying = audioProvider
-                                                                            .currentlyPlayingOrderId ==
-                                                                        order
-                                                                            .id &&
-                                                                    snapshot.data ==
-                                                                        PlayerState
-                                                                            .playing;
-                                                                return IconButton(
-                                                                  icon: Icon(
-                                                                    isPlaying
-                                                                        ? Icons
-                                                                            .stop
-                                                                        : Icons
-                                                                            .play_arrow,
-                                                                    size: 16,
-                                                                    color: isPlaying
-                                                                        ? Colors
-                                                                            .red
-                                                                        : Colors
-                                                                            .grey[600],
-                                                                  ),
-                                                                  onPressed:
-                                                                      () {
-                                                                    audioProvider.playAudio(
-                                                                        order
-                                                                            .id,
-                                                                        order
-                                                                            .note!);
-                                                                  },
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .zero,
-                                                                );
-                                                              },
-                                                            );
-                                                          },
+                                                        icon: Icon(_getActionIcon(order.status)),
+                                                        label: Text(
+                                                          _getActionText(order.status),
+                                                          style: const TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                  Text(
-                                                    'Ordered: ${_formatDateTime(order.orderTime)}',
-                                                    style: TextStyle(
-                                                      color: Colors.grey[600],
-                                                      fontSize: 12,
+                                                      ),
                                                     ),
                                                   ),
                                                 ],
                                               ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (isFirstOrder && isPendingOrPreparing)
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.priority_high,
+                                              color: Colors.white,
+                                              size: 16,
                                             ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: _getStatusColor(
-                                                        order.status)
-                                                    .withOpacity(0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                order.status
-                                                    .toString()
-                                                    .split('.')
-                                                    .last,
-                                                style: TextStyle(
-                                                  color: _getStatusColor(
-                                                      order.status),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'NEXT UP',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                ],
                               );
                             },
                           ),
@@ -403,108 +479,76 @@ class _JanitorScreenState extends State<JanitorScreen> {
           ),
         ),
       ),
-      floatingActionButton: StreamBuilder<List<TeaOrder>>(
-        stream: orderService.getJanitorOrders(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          final orders = snapshot.data!;
-          final hasPendingOrders =
-              orders.any((o) => o.status == OrderStatus.pending);
-          final hasPreparingOrders =
-              orders.any((o) => o.status == OrderStatus.preparing);
-
-          if (!hasPendingOrders && !hasPreparingOrders) {
-            return const SizedBox.shrink();
-          }
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (hasPendingOrders)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: FloatingActionButton.extended(
-                    heroTag: 'start_preparing',
-                    onPressed: () {
-                      final pendingOrder = orders
-                          .firstWhere((o) => o.status == OrderStatus.pending);
-                      _updateOrderStatus(pendingOrder, OrderStatus.preparing);
-                    },
-                    backgroundColor: Colors.orange,
-                    icon: const Icon(Icons.coffee_maker),
-                    label: const Text('Start Preparing'),
-                  ),
-                ),
-              if (hasPreparingOrders)
-                FloatingActionButton.extended(
-                  heroTag: 'mark_completed',
-                  onPressed: () {
-                    final preparingOrder = orders
-                        .firstWhere((o) => o.status == OrderStatus.preparing);
-                    _updateOrderStatus(preparingOrder, OrderStatus.completed);
-                  },
-                  backgroundColor: Colors.green,
-                  icon: const Icon(Icons.done_all),
-                  label: const Text('Mark Completed'),
-                ),
-            ],
-          );
-        },
-      ),
     );
   }
 
   void _showOrderActions(TeaOrder order) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.coffee_maker),
-                  title: const Text('Start Preparing'),
-                  enabled: order.status == OrderStatus.pending,
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _updateOrderStatus(order, OrderStatus.preparing);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.done_all),
-                  title: const Text('Mark as Completed'),
-                  enabled: order.status == OrderStatus.preparing,
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _updateOrderStatus(order, OrderStatus.completed);
-                  },
-                ),
-              ],
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 16),
+            Text(
+              'Order Actions',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            if (order.status == OrderStatus.pending)
+              ListTile(
+                leading: const Icon(Icons.coffee, color: Colors.orange),
+                title: const Text('Start Preparing'),
+                onTap: () {
+                  _updateOrderStatus(order, OrderStatus.preparing);
+                  Navigator.pop(context);
+                },
+              ),
+            if (order.status == OrderStatus.preparing)
+              ListTile(
+                leading: const Icon(Icons.done, color: Colors.green),
+                title: const Text('Mark as Complete'),
+                onTap: () {
+                  _updateOrderStatus(order, OrderStatus.completed);
+                  Navigator.pop(context);
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.cancel_outlined, color: Colors.red),
+              title: const Text('Cancel Order'),
+              onTap: () {
+                _updateOrderStatus(order, OrderStatus.cancelled);
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
     );
   }
 
   Future<void> _updateOrderStatus(TeaOrder order, OrderStatus newStatus) async {
     try {
       await orderService.updateOrderStatus(order.id, newStatus);
-      setState(() {});
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              'Order ${newStatus.toString().split('.').last.toLowerCase()}'),
+          content: Text('Order ${newStatus.toString().split('.').last.toLowerCase()}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -520,8 +564,21 @@ class _JanitorScreenState extends State<JanitorScreen> {
   }
 
   String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      final minutes = difference.inMinutes;
+      return '$minutes ${minutes == 1 ? 'minute' : 'minutes'} ago';
+    } else if (difference.inDays < 1) {
+      final hours = difference.inHours;
+      return '$hours ${hours == 1 ? 'hour' : 'hours'} ago';
+    } else {
+      final days = difference.inDays;
+      return '$days ${days == 1 ? 'day' : 'days'} ago';
+    }
   }
 
   Color _getStatusColor(OrderStatus status) {
@@ -546,9 +603,46 @@ class _JanitorScreenState extends State<JanitorScreen> {
       case DrinkType.coffee:
         return Icons.coffee_maker;
       case DrinkType.plainTea:
-        return Icons.emoji_food_beverage;
+        return Icons.local_cafe;
       case DrinkType.milkCoffee:
         return Icons.coffee;
+    }
+  }
+
+  IconData _getStatusIcon(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Icons.hourglass_empty;
+      case OrderStatus.preparing:
+        return Icons.coffee_maker;
+      case OrderStatus.completed:
+        return Icons.check_circle;
+      case OrderStatus.cancelled:
+        return Icons.cancel;
+    }
+  }
+
+  IconData _getActionIcon(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Icons.coffee_maker;
+      case OrderStatus.preparing:
+        return Icons.check_circle;
+      case OrderStatus.completed:
+      case OrderStatus.cancelled:
+        return Icons.refresh;
+    }
+  }
+
+  String _getActionText(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return 'Start Preparing';
+      case OrderStatus.preparing:
+        return 'Mark as Complete';
+      case OrderStatus.completed:
+      case OrderStatus.cancelled:
+        return 'New Order';
     }
   }
 }

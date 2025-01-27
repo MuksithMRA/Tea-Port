@@ -8,7 +8,6 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
 import 'providers/drink_selection_provider.dart';
-import 'providers/audio_provider.dart';
 
 var navkey = GlobalKey<NavigatorState>();
 void main() async {
@@ -45,15 +44,9 @@ void main() async {
           if (navkey.currentState != null) {
             showDialog(
               context: navkey.currentState!.context,
-              builder: (context) => AlertDialog(
-                title: Text(message.notification!.title ?? 'New Notification'),
-                content: Text(message.notification!.body ?? ''),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
+              builder: (context) => DynamicDialog(
+                title: message.notification!.title ?? 'New Notification',
+                body: message.notification!.body ?? '',
               ),
             );
           }
@@ -77,7 +70,6 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => DrinkSelectionProvider()),
-        ChangeNotifierProvider(create: (_) => AudioProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -94,9 +86,15 @@ class MyApp extends StatelessWidget {
 }
 
 class DynamicDialog extends StatefulWidget {
-  final title;
-  final body;
-  DynamicDialog({this.title, this.body});
+  final String? title;
+  final String? body;
+
+  const DynamicDialog({
+    super.key,
+    this.title,
+    this.body,
+  });
+
   @override
   _DynamicDialogState createState() => _DynamicDialogState();
 }
@@ -104,17 +102,101 @@ class DynamicDialog extends StatefulWidget {
 class _DynamicDialogState extends State<DynamicDialog> {
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      actions: <Widget>[
-        OutlinedButton.icon(
-            label: Text('Close'),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(Icons.close))
-      ],
-      content: Text(widget.body),
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 8,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B4513).withOpacity(0.1),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B4513),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.notifications,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.title ?? 'Notification',
+                      style: const TextStyle(
+                        color: Color(0xFF8B4513),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                widget.body ?? '',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B4513),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

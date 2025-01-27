@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../models/tea_order.dart';
 import '../providers/drink_selection_provider.dart';
 import '../utils/drink_utils.dart';
-import '../utils/voice_utils.dart';
 
 class SelectionPopup extends StatefulWidget {
   final Function(DrinkType, String?) onPlaceOrder;
@@ -20,31 +19,11 @@ class SelectionPopup extends StatefulWidget {
 }
 
 class _SelectionPopupState extends State<SelectionPopup> {
-  bool _isRecording = false;
-  String? _recordedAudio;
-
-  Future<void> _toggleRecording() async {
-    if (!_isRecording) {
-      final hasPermission = await VoiceUtils.requestPermissions();
-      if (!hasPermission) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Microphone permission denied')),
-        );
-        return;
-      }
-
-      setState(() => _isRecording = true);
-      await VoiceUtils.startRecording();
-    } else {
-      _recordedAudio = await VoiceUtils.stopRecording();
-      setState(() => _isRecording = false);
-    }
-  }
+  final TextEditingController _noteController = TextEditingController();
 
   @override
   void dispose() {
-    VoiceUtils.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -53,192 +32,143 @@ class _SelectionPopupState extends State<SelectionPopup> {
     return Consumer<DrinkSelectionProvider>(
       builder: (context, provider, _) {
         final selectedDrink = provider.selectedDrink;
+        final screenSize = MediaQuery.of(context).size;
+        final width = screenSize.width;
+        
         return AnimatedPositioned(
           duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          right: selectedDrink != null ? 24 : -300,
-          bottom: 24,
-          child: Container(
-            width: 300,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B4513).withOpacity(0.1),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
+          curve: Curves.easeOutCubic,
+          bottom: 16,
+          right: selectedDrink != null ? 16 : -320,
+          child: SafeArea(
+            child: Container(
+              width: 320,
+              constraints: BoxConstraints(
+                maxWidth: width - 32,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8B4513),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B4513).withOpacity(0.1),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
                           selectedDrink != null
                               ? getDrinkIcon(selectedDrink)
                               : Icons.local_cafe,
-                          color: Colors.white,
-                          size: 24,
+                          color: const Color(0xFF8B4513),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Selected Drink',
-                              style: TextStyle(
-                                color: Color(0xFF8B4513),
-                                fontSize: 14,
-                              ),
-                            ),
-                            if (selectedDrink != null)
-                              Text(
-                                selectedDrink.toString().split('.').last,
-                                style: const TextStyle(
-                                  color: Color(0xFF8B4513),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => provider.selectDrink(null),
-                        icon: const Icon(
-                          Icons.close,
-                          color: Color(0xFF8B4513),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Ready to place your order?',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (selectedDrink != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Add a voice note (optional)',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (_recordedAudio != null)
-                                    IconButton(
-                                      icon: const Icon(Icons.play_arrow),
-                                      onPressed: () =>
-                                          VoiceUtils.playAudio(_recordedAudio!),
-                                    ),
-                                  IconButton(
-                                    icon: Icon(
-                                        _isRecording ? Icons.stop : Icons.mic),
-                                    color: _isRecording ? Colors.red : null,
-                                    onPressed: _toggleRecording,
-                                  ),
-                                  if (_recordedAudio != null)
-                                    IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () =>
-                                          setState(() => _recordedAudio = null),
-                                    ),
-                                ],
-                              ),
-                              if (_recordedAudio != null)
-                                const Text(
-                                  'Voice note recorded',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: widget.isLoading || selectedDrink == null
-                              ? null
-                              : () {
-                                  widget.onPlaceOrder(
-                                      selectedDrink, _recordedAudio);
-                                  provider.selectDrink(null);
-                                  setState(() => _recordedAudio = null);
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8B4513),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            selectedDrink != null
+                                ? selectedDrink.toString().split('.').last
+                                : 'Select a Drink',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8B4513),
                             ),
                           ),
-                          child: widget.isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
-                                  ),
-                                )
-                              : const Text(
-                                  'Place Order',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         ),
-                      ),
-                    ],
+                        IconButton(
+                          onPressed: () => provider.selectDrink(null),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Color(0xFF8B4513),
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [],
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (selectedDrink != null) ...[
+                          TextField(
+                            controller: _noteController,
+                            decoration: const InputDecoration(
+                              hintText: 'Add a note (optional)',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            maxLines: 2,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        SizedBox(
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: widget.isLoading || selectedDrink == null
+                                ? null
+                                : () {
+                                    widget.onPlaceOrder(
+                                      selectedDrink,
+                                      _noteController.text.trim().isNotEmpty
+                                          ? _noteController.text.trim()
+                                          : null,
+                                    );
+                                    provider.selectDrink(null);
+                                    _noteController.clear();
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8B4513),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: widget.isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Place Order',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
