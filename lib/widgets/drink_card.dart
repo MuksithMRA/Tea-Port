@@ -17,6 +17,7 @@ class DrinkCard extends StatelessWidget {
     return Consumer<DrinkSelectionProvider>(
       builder: (context, provider, _) {
         final isSelected = provider.selectedDrink == drinkType;
+        final isDesktop = MediaQuery.of(context).size.width > 600;
         
         return Card(
           elevation: isSelected ? 4 : 1,
@@ -40,15 +41,15 @@ class DrinkCard extends StatelessWidget {
                     children: [
                       Icon(
                         getDrinkIcon(drinkType),
-                        size: 32,
+                        size: isDesktop ? 28 : 32,
                         color: isSelected ? const Color(0xFF8B4513) : Colors.grey[700],
                       ),
-                      const SizedBox(height: 8),
+                       SizedBox(height: isDesktop ? 4 : 8),
                       Text(
                         drinkType.toString().split('.').last.toUpperCase(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: isDesktop ? 12 : 14,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                           color: isSelected ? const Color(0xFF8B4513) : Colors.grey[800],
                         ),

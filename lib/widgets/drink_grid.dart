@@ -11,9 +11,9 @@ class DrinkGrid extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
+        childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.1 : 1.3,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),

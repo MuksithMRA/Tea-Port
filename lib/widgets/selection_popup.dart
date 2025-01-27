@@ -81,7 +81,7 @@ class _SelectionPopupState extends State<SelectionPopup> {
                         Expanded(
                           child: Text(
                             selectedDrink != null
-                                ? selectedDrink.toString().split('.').last
+                                ? selectedDrink.toString().split('.').last.toUpperCase()
                                 : 'Select a Drink',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
