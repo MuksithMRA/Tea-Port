@@ -13,11 +13,13 @@ import 'providers/audio_provider.dart';
 var navkey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  if (Firebase.apps.isEmpty)
+  if (kIsWeb) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+  } else {
+    await Firebase.initializeApp();
+  }
 
   if (kIsWeb) {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -39,16 +41,21 @@ void main() async {
         print('Message data: ${message.data}');
 
         if (message.notification != null) {
-          if (message.notification != null) {
-            print(
-                'Message also contained a notification: ${message.notification!.body}');
+          print('Message also contained a notification: ${message.notification!.body}');
+          if (navkey.currentState != null) {
             showDialog(
-                context: navkey.currentState!.context,
-                builder: ((BuildContext context) {
-                  return DynamicDialog(
-                      title: message.notification!.title,
-                      body: message.notification!.body);
-                }));
+              context: navkey.currentState!.context,
+              builder: (context) => AlertDialog(
+                title: Text(message.notification!.title ?? 'New Notification'),
+                content: Text(message.notification!.body ?? ''),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
           }
         }
       });
@@ -74,10 +81,11 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        navigatorKey: navkey,
         title: 'Tea Port',
         theme: ThemeData(
           primarySwatch: Colors.brown,
-          useMaterial3: true,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: const SplashScreen(),
       ),

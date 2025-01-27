@@ -40,4 +40,41 @@ class AppwriteService {
       return 'internal-ht.web.app';
     }
   }
+
+  // Retry configuration
+  static const int maxRetries = 3;
+  static const int initialDelayMs = 1000;
+
+  /// Generic retry mechanism for Appwrite operations
+  Future<T> retryOperation<T>(Future<T> Function() operation) async {
+    int attempts = 0;
+    int delay = initialDelayMs;
+
+    while (true) {
+      try {
+        return await operation();
+      } on AppwriteException catch (e) {
+        attempts++;
+        
+        // Check if it's a rate limit error (HTTP 429)
+        if (e.code == 429) {
+          if (attempts >= maxRetries) {
+            rethrow; // Max retries reached, throw the error
+          }
+
+          // Wait with exponential backoff
+          await Future.delayed(Duration(milliseconds: delay));
+          delay *= 2; // Exponential backoff
+          continue;
+        }
+        
+        rethrow; // Not a rate limit error, throw immediately
+      }
+    }
+  }
+
+  // Example wrapper for database operations
+  Future<dynamic> safeDatabaseOperation(Future<dynamic> Function() dbOperation) {
+    return retryOperation(dbOperation);
+  }
 }

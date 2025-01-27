@@ -2,6 +2,7 @@ import 'package:appwrite/models.dart' as models;
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import 'appwrite_service.dart';
+import 'notification_service.dart'; // Added import statement
 
 class AuthService extends ChangeNotifier {
   final AppwriteService _appwrite = AppwriteService();
@@ -59,13 +60,13 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signOut() async {
     try {
+      // Clean up FCM token before signing out
+      final notificationService = NotificationService();
+      await notificationService.removeCurrentToken();
+      
       await _appwrite.account.deleteSession(sessionId: 'current');
-      await _appwrite.databases.updateDocument(
-        databaseId: AppwriteService.databaseId,
-        collectionId: AppwriteService.usersCollectionId,
-        documentId: _currentUser!.$id,
-        data: {'fcmToken': ''},
-      );
+    } catch (e) {
+      debugPrint('Error during sign out: $e');
     } finally {
       _currentUser = null;
       _userData = null;

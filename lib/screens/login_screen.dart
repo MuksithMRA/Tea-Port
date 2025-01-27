@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tea_port/services/notification_service.dart';
@@ -43,14 +43,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return;
 
-        if (!kIsWeb) {
-          NotificationService notificationService = NotificationService();
-          notificationService.initialize();
-        }
+        // Initialize notifications for both web and mobile after successful login
+        await NotificationService().initialize();
 
         // Navigate based on user role
         final userData = authService.userData;
         if (userData != null) {
+          if (!mounted) return;
+          
           switch (userData.role) {
             case UserRole.employee:
               Navigator.of(context).pushReplacement(

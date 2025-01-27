@@ -13,13 +13,23 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // Handle background messages
-messaging.setBackgroundMessageHandler((payload) => {
-    console.log('Received background message:', payload);
+messaging.setBackgroundMessageHandler(function(payload) {
+    console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-    const notificationTitle = payload.notification.title;
+    const notificationTitle = payload.notification.title || 'Background Message';
     const notificationOptions = {
-        body: payload.notification.body,
-        icon: '/icons/Icon-192.png'
+        body: payload.notification.body || '',
+        icon: '/icons/Icon-192.png',
+        badge: '/icons/Icon-192.png',
+        tag: payload.data?.type || 'default',
+        data: payload.data || {},
+        requireInteraction: true,
+        actions: [
+            {
+                action: 'open',
+                title: 'Open'
+            }
+        ]
     };
 
     return self.registration.showNotification(notificationTitle, notificationOptions);

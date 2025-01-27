@@ -6,34 +6,45 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:tea_port/services/appwrite_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
+import '../main.dart';
 import '../models/tea_order.dart';
+
+
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  late final FirebaseMessaging _messaging;
-  late final FlutterLocalNotificationsPlugin _localNotifications;
+  FirebaseMessaging? _messaging;
+  FlutterLocalNotificationsPlugin? _localNotifications;
+  bool _isInitialized = false;
 
   bool get isSupported => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   Future<void> initialize() async {
-    if (!isSupported) return;
-
     _messaging = FirebaseMessaging.instance;
-    _localNotifications = FlutterLocalNotificationsPlugin();
 
+    if (!kIsWeb) {
+      if (!_isInitialized) {
+        _localNotifications = FlutterLocalNotificationsPlugin();
+        await _initializeLocalNotifications();
+        _isInitialized = true;
+      }
+    }
+
+    // Always try to initialize Firebase messaging and update token
     await _initializeFirebaseMessaging();
-    await _initializeLocalNotifications();
   }
 
   Future<void> _initializeFirebaseMessaging() async {
-    if (!isSupported) return;
+    if (_messaging == null) return;
 
     // Request permission
-    NotificationSettings settings = await _messaging.requestPermission(
+    NotificationSettings settings = await _messaging!.requestPermission(
       alert: true,
       badge: true,
       sound: true,
@@ -41,24 +52,26 @@ class NotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       // Get FCM token
-      String? token = await _messaging.getToken();
+      String? token = await _messaging!.getToken();
       if (token != null) {
         await _updateUserFCMToken(token);
       }
 
       // Listen for token refresh
-      _messaging.onTokenRefresh.listen(_updateUserFCMToken);
+      _messaging!.onTokenRefresh.listen(_updateUserFCMToken);
 
       // Handle messages
       FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
+      if (!kIsWeb) {
+        FirebaseMessaging.onBackgroundMessage(
+            _firebaseMessagingBackgroundHandler);
+      }
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
     }
   }
 
   Future<void> _initializeLocalNotifications() async {
-    if (!isSupported) return;
+    if (kIsWeb || _localNotifications == null) return;
 
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -70,14 +83,14 @@ class NotificationService {
       iOS: iOSSettings,
     );
 
-    await _localNotifications.initialize(
+    await _localNotifications!.initialize(
       settings,
       onDidReceiveNotificationResponse: _handleNotificationTap,
     );
 
     // Create notification channel for Android
     if (Platform.isAndroid) {
-      await _localNotifications
+      await _localNotifications!
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(
@@ -92,25 +105,118 @@ class NotificationService {
   }
 
   Future<void> _updateUserFCMToken(String token) async {
-    if (!isSupported) return;
-
     AppwriteService appwrite = AppwriteService();
     try {
-      final currentUser = appwrite.account.get();
+      final currentUser = await appwrite.account.get();
+      
+      // Get the current user document to check existing tokens
+      final userDoc = await appwrite.databases.getDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.usersCollectionId,
+        documentId: currentUser.$id,
+      );
+
+      // Get existing tokens or initialize empty list
+      List<String> tokens = List<String>.from(userDoc.data['fcmTokens'] ?? []);
+
+      // Add new token if it doesn't exist
+      if (!tokens.contains(token)) {
+        tokens.add(token);
+
+        // Update the document with the new token list
+        await appwrite.databases.updateDocument(
+          databaseId: AppwriteService.databaseId,
+          collectionId: AppwriteService.usersCollectionId,
+          documentId: currentUser.$id,
+          data: {'fcmTokens': tokens},
+        );
+      }
+
+      // Store the current token locally for cleanup during sign out
+      if (!kIsWeb) {
+        await _storeCurrentToken(token);
+      }
+    } catch (e) {
+      debugPrint('Error updating FCM tokens: $e');
+    }
+  }
+
+  Future<void> _storeCurrentToken(String token) async {
+    // Store the token for the current device
+    if (!kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('current_fcm_token', token);
+    }
+  }
+
+  Future<String?> getCurrentToken() async {
+    if (!kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('current_fcm_token');
+    }
+    return null;
+  }
+
+  Future<void> removeCurrentToken() async {
+    if (!isSupported) return;
+
+    try {
+      final token = await getCurrentToken();
+      if (token == null) return;
+
+      AppwriteService appwrite = AppwriteService();
+      final currentUser = await appwrite.account.get();
+
+      // Get current user document
+      final userDoc = await appwrite.databases.getDocument(
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.usersCollectionId,
+        documentId: currentUser.$id,
+      );
+
+      // Remove the token from the list
+      List<String> tokens = List<String>.from(userDoc.data['fcmTokens'] ?? []);
+      tokens.remove(token);
+
+      // Update the document with the updated token list
       await appwrite.databases.updateDocument(
         databaseId: AppwriteService.databaseId,
         collectionId: AppwriteService.usersCollectionId,
-        documentId: (await currentUser).$id,
-        data: {'fcmToken': token},
+        documentId: currentUser.$id,
+        data: {'fcmTokens': tokens},
       );
+
+      // Clear the stored token
+      if (!kIsWeb) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('current_fcm_token');
+      }
     } catch (e) {
-      debugPrint('Error updating FCM token: $e');
+      debugPrint('Error removing FCM token: $e');
     }
   }
 
   void _handleForegroundMessage(RemoteMessage message) async {
-    if (!isSupported) return;
-    await _showLocalNotification(message);
+    if (kIsWeb) {
+      // For web, show a dialog
+      if (message.notification != null) {
+        showDialog(
+          context: navkey.currentState!.context,
+          builder: (context) => AlertDialog(
+            title: Text(message.notification!.title ?? 'New Notification'),
+            content: Text(message.notification!.body ?? ''),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } else if (isSupported) {
+      await _showLocalNotification(message);
+    }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -120,7 +226,7 @@ class NotificationService {
     AndroidNotification? android = message.notification?.android;
 
     if (notification != null) {
-      await _localNotifications.show(
+      await _localNotifications!.show(
         notification.hashCode,
         notification.title,
         notification.body,
@@ -185,7 +291,7 @@ class NotificationService {
       iOS: iOSDetails,
     );
 
-    await _localNotifications.show(
+    await _localNotifications!.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
@@ -206,23 +312,29 @@ class NotificationService {
 
       // Send notification to each janitor
       for (final janitor in janitors.documents) {
-        final fcmToken = janitor.data['fcmToken'];
-        debugPrint(
-            'Sending janitor notification to ${janitor.data['fcmToken']}');
-        if (fcmToken != null) {
-          await AppwriteService().functions.createExecution(
-                functionId: 'sendPushNotification',
-                body: json.encode({
-                  'token': fcmToken,
-                  'title': 'New Tea Order',
-                  'body':
-                      'New ${order.drinkType.toString().split('.').last} order from ${order.userName}',
-                  'data': {
-                    'orderId': order.id,
-                    'type': 'new_order',
-                  },
-                }),
-              );
+        final tokens = List<String>.from(janitor.data['fcmTokens'] ?? []);
+        debugPrint('Found FCM tokens for janitor: $tokens');
+        
+        for (final token in tokens) {
+          try {
+            await AppwriteService().functions.createExecution(
+              functionId: 'sendPushNotification',
+              body: json.encode({
+                'token': token,
+                'title': 'New Tea Order',
+                'body':
+                    'New ${order.drinkType.toString().split('.').last} order from ${order.userName}',
+                'data': {
+                  'orderId': order.id,
+                  'type': 'new_order',
+                },
+              }),
+            );
+            debugPrint('Successfully sent notification to token: $token');
+          } catch (e) {
+            debugPrint('Error sending notification to token $token: $e');
+            continue;
+          }
         }
       }
     } catch (e) {
@@ -234,13 +346,13 @@ class NotificationService {
     try {
       // Get the employee who placed the order
       final employee = await AppwriteService().databases.getDocument(
-            databaseId: AppwriteService.databaseId,
-            collectionId: AppwriteService.usersCollectionId,
-            documentId: order.userId,
-          );
+        databaseId: AppwriteService.databaseId,
+        collectionId: AppwriteService.usersCollectionId,
+        documentId: order.userId,
+      );
 
-      final fcmToken = employee.data['fcmToken'];
-      if (fcmToken != null) {
+      final tokens = List<String>.from(employee.data['fcmTokens'] ?? []);
+      if (tokens.isNotEmpty) {
         String statusMessage;
         switch (order.status) {
           case OrderStatus.pending:
@@ -259,10 +371,12 @@ class NotificationService {
             statusMessage = 'Your order status has been updated';
         }
 
-        await AppwriteService().functions.createExecution(
+        for (final token in tokens) {
+          try {
+            await AppwriteService().functions.createExecution(
               functionId: 'sendPushNotification',
               body: json.encode({
-                'token': fcmToken,
+                'token': token,
                 'title': 'Order Update',
                 'body': statusMessage,
                 'data': {
@@ -272,6 +386,12 @@ class NotificationService {
                 },
               }),
             );
+            debugPrint('Successfully sent status update to token: $token');
+          } catch (e) {
+            debugPrint('Error sending status update to token $token: $e');
+            continue;
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error sending order status notification: $e');

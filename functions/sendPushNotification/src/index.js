@@ -11,7 +11,9 @@ module.exports = async function (req, res) {
         // Initialize Firebase Admin SDK
         if (!admin.apps.length) {
             admin.initializeApp({
-                credential: admin.credential.cert(config.firebase)
+                credential: admin.credential.cert(config.firebase),
+                projectId: "medoment-tea-serve",
+                messagingSenderId: "47791069713"
             });
         }
         console.log(req.req.body);

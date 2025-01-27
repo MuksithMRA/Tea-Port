@@ -121,6 +121,6 @@ class VoiceUtils {
 
   static Future<void> dispose() async {
     await _audioRecorder.dispose();
-    await _audioPlayer.dispose();
+    await _audioPlayer.release();
   }
 }
